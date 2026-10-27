@@ -1,0 +1,15 @@
+# FluxV2X Code Ownership Policy
+# For details, see: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default global code owner for the repository
+* @Pranay-Kumar-02
+
+# Backend API, Security & ML Engine
+/backend/ @Pranay-Kumar-02
+
+# Frontend Application & Telemetry Views
+/frontend/ @Pranay-Kumar-02
+
+# Core Architecture, Documentation & Operations
+/docs/ @Pranay-Kumar-02
+/.github/ @Pranay-Kumar-02

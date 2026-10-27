@@ -1,0 +1,65 @@
+name: Bug Report
+description: Report a reproducible defect or unexpected behavior in FluxV2X.
+title: "[BUG]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a defect! Please fill out the sections below.
+        **Note:** For security vulnerabilities or credential leakage, please refer to [SECURITY.md](../SECURITY.md) for private reporting.
+  - type: input
+    id: version
+    attributes:
+      label: Product Version
+      description: What version of FluxV2X are you running? (e.g., v0.2.0 or Git commit hash)
+      placeholder: v0.2.0
+    validations:
+      required: true
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Execution Environment
+      options:
+        - Docker Compose
+        - Local Python / Node (Linux)
+        - Local Python / Node (macOS)
+        - Local Python / Node (Windows)
+        - Other (explain below)
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Specific, minimal steps to reproduce the behavior.
+      placeholder: |
+        1. Ingest dataset 'example.parquet' via Dataset Library
+        2. Navigate to Model Laboratory
+        3. Launch Experiment with Split Strategy 'scenario_stratified'
+        4. See error...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: A clear and concise description of what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior / Observed Output
+      description: What actually occurred? Include server logs or browser console errors (scrub all passwords/keys).
+    validations:
+      required: true
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Confirmations
+      options:
+        - label: I have searched existing issues and verified this is not a duplicate.
+          required: true
+        - label: I have scrubbed all sensitive secrets, credentials, and tokens from any logs provided.
+          required: true

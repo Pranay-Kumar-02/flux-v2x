@@ -55,10 +55,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate }) => 
           <h1 className="font-bold text-base tracking-wide text-flux-text flex items-center gap-1.5">
             FluxV2X
             <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-flux-accent/20 text-flux-accent font-semibold">
-              v0.1
+              v0.2.0
             </span>
           </h1>
-          <p className="text-[11px] text-flux-muted truncate">ACAFDM Security Workbench</p>
+          <p className="text-[11px] text-flux-muted truncate">Context-Aware Security Platform</p>
         </div>
       </div>
 

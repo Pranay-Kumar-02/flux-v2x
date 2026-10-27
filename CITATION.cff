@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use FluxV2X in research, benchmarking, or security evaluations, please cite the software as follows."
+title: "FluxV2X: Context-Aware Network Security and Experimentation Platform"
+abstract: "FluxV2X is an extensible data engineering and network security platform for structured-data analysis, contextual anomaly detection, reproducible machine-learning experiments, vehicular communication security, and offline defensive-policy evaluation."
+type: software
+authors:
+  - name: "FluxV2X Open-Source Contributors"
+    website: "https://github.com/Pranay-Kumar-02/flux-v2x"
+repository-code: "https://github.com/Pranay-Kumar-02/flux-v2x"
+url: "https://github.com/Pranay-Kumar-02/flux-v2x"
+license: Apache-2.0
+version: 0.2.0
+date-released: 2026-10-27
+keywords:
+  - "network security"
+  - "context-aware anomaly detection"
+  - "vehicular networks"
+  - "acafdm"
+  - "traffic congestion"
+  - "machine learning"
+  - "reproducible experiments"
