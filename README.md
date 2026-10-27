@@ -305,6 +305,7 @@ Comprehensive engineering, architectural, and operational documentation is maint
 - [Troubleshooting & Diagnostics Guide](docs/operations/TROUBLESHOOTING.md)
 - [Security Threat Model (STRIDE)](docs/security/THREAT_MODEL.md)
 - [Security Controls & Verification Matrix](docs/security/SECURITY_CONTROLS.md)
+- [Tracked Dependency Security Disposition](docs/security/DEPENDENCY_SECURITY_DISPOSITION.md)
 - [Release Management & Engineering Process](docs/releases/RELEASE_PROCESS.md)
 - [GitHub Repository Settings Checklist](docs/operations/REPOSITORY_SETTINGS_CHECKLIST.md)
 - [Product Roadmap](docs/product/ROADMAP.md)
