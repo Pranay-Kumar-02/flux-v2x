@@ -138,6 +138,7 @@ def test_experiment_and_benchmark_api(auth_headers):
     assert r2.status_code == 200
     exp2_id = r2.json()["id"]
 
+    exp2_data = {}
     start_t = time.time()
     while time.time() - start_t < max_wait:
         poll_res = client.get(f"/api/v1/experiments/{exp2_id}", headers=auth_headers)
@@ -146,7 +147,7 @@ def test_experiment_and_benchmark_api(auth_headers):
             break
         time.sleep(0.3)
 
-    assert exp2_data["status"] == "completed"
+    assert exp2_data.get("status") == "completed"
     assert exp2_data["metrics"]["macro_f1"] > 0.0
 
     # Compare benchmark

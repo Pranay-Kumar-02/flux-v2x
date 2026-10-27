@@ -264,7 +264,8 @@ def preview_dataset(
             dtypes=dtypes
         )
     except Exception as e:
-        logger.error(f"Preview reading error for dataset {dataset_id}: {e}", exc_info=True)
+        safe_id = dataset_id.replace('\r', '').replace('\n', '')
+        logger.error("Preview reading error for dataset %s: %s", safe_id, str(e), exc_info=True)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to load dataset preview.")
 
 
@@ -332,7 +333,8 @@ def get_dataset_profile(
             created_at=datetime.datetime.utcnow()
         )
     except Exception as e:
-        logger.error(f"Profiling error for dataset {dataset_id}: {e}", exc_info=True)
+        safe_id = dataset_id.replace('\r', '').replace('\n', '')
+        logger.error("Profiling error for dataset %s: %s", safe_id, str(e), exc_info=True)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to profile dataset.")
 
 
@@ -342,24 +344,28 @@ def delete_dataset(
     workspace: Workspace = Depends(get_current_workspace),
     db: Session = Depends(get_db)
 ):
+    safe_id = dataset_id.replace('\r', '').replace('\n', '')
     dataset = db.query(Dataset).filter(
-        Dataset.id == dataset_id,
+        Dataset.id == safe_id,
         Dataset.workspace_id == workspace.id
     ).first()
     if not dataset:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dataset not found in active workspace.")
 
-    # Remove files from disk safely
+    # Remove files from disk safely with canonicalized path containment checks
     try:
-        upload_dir = os.path.join(settings.LOCAL_STORAGE_PATH, dataset_id)
-        derived_dir = os.path.join(settings.DERIVED_STORAGE_PATH, dataset_id)
-        if os.path.exists(upload_dir):
+        storage_root = os.path.realpath(settings.LOCAL_STORAGE_PATH)
+        derived_root = os.path.realpath(settings.DERIVED_STORAGE_PATH)
+        upload_dir = os.path.realpath(os.path.join(storage_root, safe_id))
+        derived_dir = os.path.realpath(os.path.join(derived_root, safe_id))
+
+        if upload_dir.startswith(storage_root) and os.path.exists(upload_dir):
             shutil.rmtree(upload_dir)
-        if os.path.exists(derived_dir):
+        if derived_dir.startswith(derived_root) and os.path.exists(derived_dir):
             shutil.rmtree(derived_dir)
     except Exception as e:
-        logger.warning(f"Error cleaning files on deletion of dataset {dataset_id}: {e}")
+        logger.warning("Error cleaning files on deletion of dataset %s: %s", safe_id, str(e))
 
     db.delete(dataset)
     db.commit()
-    return {"message": "Dataset successfully deleted", "dataset_id": dataset_id}
+    return {"message": "Dataset successfully deleted", "dataset_id": safe_id}

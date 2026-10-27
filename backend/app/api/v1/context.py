@@ -48,11 +48,12 @@ def get_context_explorer_data(
 
     try:
         # Cluster context if spatial available
-        cluster_labels = np.zeros(df.height, dtype=int)
         if has_spatial:
             clusterer = SpatiotemporalClusterer(n_clusters=4)
             cluster_labels, _ = clusterer.fit_predict(df)
-            df = df.with_columns(pl.Series("cluster_id", cluster_labels))
+        else:
+            cluster_labels = np.zeros(df.height, dtype=int)
+        df = df.with_columns(pl.Series("cluster_id", cluster_labels))
 
         # Baseline & deviation features
         baseline_engine = LocalizedBaselineEngine(metric_col="packet_rate")

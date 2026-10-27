@@ -1,1 +1,3 @@
-from app.schemas.api_models import *
+from app.schemas import api_models
+
+__all__ = ["api_models"]
