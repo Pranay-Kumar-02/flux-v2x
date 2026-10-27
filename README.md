@@ -15,12 +15,6 @@ Its general-purpose data and experiment infrastructure supports security enginee
 
 ---
 
-## Application Interface Capture
-
-![FluxV2X Command Center Overview](docs/assets/fluxv2x_overview.png)
-
----
-
 ## 1. The Problem FluxV2X Solves
 
 Modern distributed communication networks—such as Vehicular Ad-Hoc Networks (VANETs), Cellular Vehicle-to-Everything (C-V2X), and critical infrastructure sensor meshes—exhibit extreme traffic volatility:
