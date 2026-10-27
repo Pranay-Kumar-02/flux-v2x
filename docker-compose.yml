@@ -4,17 +4,31 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: fluxv2x-postgres
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: fluxv2x_db
-      POSTGRES_USER: fluxv2x_user
-      POSTGRES_PASSWORD: fluxv2x_secure_password_replace_in_prod
-    ports:
-      - "5432:5432"
+      POSTGRES_DB: ${POSTGRES_DB:-fluxv2x_db}
+      POSTGRES_USER: ${POSTGRES_USER:-fluxv2x_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?CRITICAL: POSTGRES_PASSWORD must be provided via environment variable}
+    # Internal network only: database port 5432 is NOT published to host in production
+    networks:
+      - fluxv2x-network
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U fluxv2x_user -d fluxv2x_db"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-fluxv2x_user} -d $${POSTGRES_DB:-fluxv2x_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: fluxv2x-redis
+    restart: unless-stopped
+    networks:
+      - fluxv2x-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
       timeout: 5s
       retries: 5
 
@@ -23,18 +37,26 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: fluxv2x-backend
+    restart: unless-stopped
+    stop_grace_period: 30s
     environment:
-      DATABASE_URL: postgresql+psycopg2://fluxv2x_user:fluxv2x_secure_password_replace_in_prod@postgres:5432/fluxv2x_db
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-fluxv2x_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-fluxv2x_db}
+      REDIS_URL: redis://redis:6379/0
       ENVIRONMENT: production
       DEBUG: "false"
-      SECRET_KEY: fluxv2x-production-secret-key-32-bytes-minimum-string
-      ALLOWED_ORIGINS: "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173"
-      AUTO_LOAD_DEMO_DATASET: "true"
+      SECRET_KEY: ${SECRET_KEY:?CRITICAL: Cryptographically strong SECRET_KEY must be provided via environment variable}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://your-domain.com}
+      AUTO_LOAD_DEMO_DATASET: "false"
+      ENABLE_DEV_BOOTSTRAP: "false"
     ports:
       - "8000:8000"
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - fluxv2x-network
     volumes:
       - ./data:/app/data
       - ./artifacts:/app/artifacts
@@ -44,10 +66,17 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: fluxv2x-frontend
+    restart: unless-stopped
     ports:
       - "5173:80"
     depends_on:
       - backend
+    networks:
+      - fluxv2x-network
+
+networks:
+  fluxv2x-network:
+    driver: bridge
 
 volumes:
   pgdata:

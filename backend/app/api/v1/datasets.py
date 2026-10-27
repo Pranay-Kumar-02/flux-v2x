@@ -1,9 +1,11 @@
 import os
+import re
 import uuid
 import datetime
 import shutil
+import logging
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 import polars as pl
@@ -16,7 +18,18 @@ from app.api.deps import get_current_user, get_current_workspace
 from app.ingestion.parser import IngestionEngine
 from app.profiling.profiler import DatasetProfiler
 
+logger = logging.getLogger("fluxv2x.datasets")
 router = APIRouter(prefix="/datasets", tags=["Dataset Library & Ingestion"])
+
+
+def _sanitize_filename(filename: str) -> str:
+    """Sanitize filename to prevent path traversal or special character injection."""
+    base = os.path.basename(filename)
+    # Strip null bytes and non-whitelisted characters
+    clean = re.sub(r"[^\w\.\-\_]", "_", base)
+    if not clean or clean.startswith("."):
+        clean = f"upload_{uuid.uuid4().hex[:8]}"
+    return clean
 
 
 @router.post("/upload", response_model=DatasetOut)
@@ -31,7 +44,15 @@ async def upload_dataset(
     db: Session = Depends(get_db)
 ):
     if not file.filename:
-        raise HTTPException(status_code=400, detail="Uploaded file has no filename.")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Uploaded file has no filename.")
+
+    sanitized_filename = _sanitize_filename(file.filename)
+    _, ext = os.path.splitext(sanitized_filename)
+    if ext.lower() not in settings.ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"File extension '{ext}' is not permitted. Allowed formats: {', '.join(settings.ALLOWED_EXTENSIONS)}"
+        )
 
     dataset_id = str(uuid.uuid4())
     version_id = str(uuid.uuid4())
@@ -40,26 +61,49 @@ async def upload_dataset(
     os.makedirs(upload_dir, exist_ok=True)
     os.makedirs(derived_dir, exist_ok=True)
 
-    sanitized_filename = os.path.basename(file.filename)
     raw_path = os.path.join(upload_dir, sanitized_filename)
-
-    with open(raw_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    file_size = os.path.getsize(raw_path)
-    file_format = IngestionEngine.detect_format(raw_path, sanitized_filename)
     dest_parquet_path = os.path.join(derived_dir, "v1.parquet")
 
+    # Bounded streaming write to enforce maximum file size
+    bytes_written = 0
     try:
+        with open(raw_path, "wb") as buffer:
+            while True:
+                chunk = await file.read(1024 * 1024)  # 1MB chunks
+                if not chunk:
+                    break
+                bytes_written += len(chunk)
+                if bytes_written > settings.MAX_UPLOAD_SIZE_BYTES:
+                    buffer.close()
+                    if os.path.exists(raw_path):
+                        os.remove(raw_path)
+                    raise HTTPException(
+                        status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                        detail=f"Uploaded file exceeds maximum allowed size of {settings.MAX_UPLOAD_SIZE_BYTES // (1024*1024)} MB."
+                    )
+                buffer.write(chunk)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"File upload streaming failed: {e}", exc_info=True)
+        if os.path.exists(raw_path):
+            os.remove(raw_path)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to process uploaded file.")
+
+    try:
+        file_format = IngestionEngine.detect_format(raw_path, sanitized_filename)
         row_count, col_count, sha256_hash = IngestionEngine.ingest_and_standardize(
             raw_path, dest_parquet_path, file_format
         )
     except Exception as e:
+        logger.error(f"Standardization failure on {raw_path}: {e}", exc_info=True)
         if os.path.exists(raw_path):
             os.remove(raw_path)
-        raise HTTPException(status_code=400, detail=f"Failed to ingest file: {str(e)}")
+        if os.path.exists(dest_parquet_path):
+            os.remove(dest_parquet_path)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to parse and standardize structured dataset.")
 
-    display_name = name or os.path.splitext(sanitized_filename)[0]
+    display_name = name.strip() if name and name.strip() else os.path.splitext(sanitized_filename)[0]
 
     dataset = Dataset(
         id=dataset_id,
@@ -68,7 +112,7 @@ async def upload_dataset(
         description=description,
         file_format=file_format,
         file_path=raw_path,
-        file_size_bytes=file_size,
+        file_size_bytes=bytes_written,
         sha256_hash=sha256_hash,
         row_count=row_count,
         column_count=col_count,
@@ -104,8 +148,8 @@ async def upload_dataset(
         )
         db.add(db_profile)
         db.commit()
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"Automated initial profiling encountered an issue: {e}")
 
     db.refresh(dataset)
     return DatasetOut(
@@ -130,6 +174,7 @@ def list_datasets(
     workspace: Workspace = Depends(get_current_workspace),
     db: Session = Depends(get_db)
 ):
+    """List all datasets owned by the current authorized workspace."""
     datasets = db.query(Dataset).filter(Dataset.workspace_id == workspace.id).order_by(Dataset.created_at.desc()).all()
     out = []
     for d in datasets:
@@ -163,7 +208,7 @@ def get_dataset(
         Dataset.workspace_id == workspace.id
     ).first()
     if not dataset:
-        raise HTTPException(status_code=404, detail="Dataset not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dataset not found in active workspace.")
 
     return DatasetOut(
         id=dataset.id,
@@ -195,13 +240,13 @@ def preview_dataset(
         Dataset.workspace_id == workspace.id
     ).first()
     if not dataset:
-        raise HTTPException(status_code=404, detail="Dataset not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dataset not found in active workspace.")
 
     latest_version = db.query(DatasetVersion).filter(
         DatasetVersion.dataset_id == dataset.id
     ).order_by(DatasetVersion.version_num.desc()).first()
     if not latest_version or not os.path.exists(latest_version.file_path):
-        raise HTTPException(status_code=404, detail="Standardized dataset file not found on disk")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Standardized dataset file not found on disk.")
 
     try:
         df = pl.read_parquet(latest_version.file_path)
@@ -219,7 +264,8 @@ def preview_dataset(
             dtypes=dtypes
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to load preview: {str(e)}")
+        logger.error(f"Preview reading error for dataset {dataset_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to load dataset preview.")
 
 
 @router.get("/{dataset_id}/profile", response_model=DatasetProfileOut)
@@ -233,13 +279,13 @@ def get_dataset_profile(
         Dataset.workspace_id == workspace.id
     ).first()
     if not dataset:
-        raise HTTPException(status_code=404, detail="Dataset not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dataset not found in active workspace.")
 
     latest_version = db.query(DatasetVersion).filter(
         DatasetVersion.dataset_id == dataset.id
     ).order_by(DatasetVersion.version_num.desc()).first()
     if not latest_version:
-        raise HTTPException(status_code=404, detail="Dataset version not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dataset version not found.")
 
     profile_rec = db.query(DatasetProfile).filter(
         DatasetProfile.dataset_version_id == latest_version.id
@@ -286,7 +332,8 @@ def get_dataset_profile(
             created_at=datetime.datetime.utcnow()
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to profile dataset: {str(e)}")
+        logger.error(f"Profiling error for dataset {dataset_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to profile dataset.")
 
 
 @router.delete("/{dataset_id}")
@@ -300,7 +347,18 @@ def delete_dataset(
         Dataset.workspace_id == workspace.id
     ).first()
     if not dataset:
-        raise HTTPException(status_code=404, detail="Dataset not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dataset not found in active workspace.")
+
+    # Remove files from disk safely
+    try:
+        upload_dir = os.path.join(settings.LOCAL_STORAGE_PATH, dataset_id)
+        derived_dir = os.path.join(settings.DERIVED_STORAGE_PATH, dataset_id)
+        if os.path.exists(upload_dir):
+            shutil.rmtree(upload_dir)
+        if os.path.exists(derived_dir):
+            shutil.rmtree(derived_dir)
+    except Exception as e:
+        logger.warning(f"Error cleaning files on deletion of dataset {dataset_id}: {e}")
 
     db.delete(dataset)
     db.commit()

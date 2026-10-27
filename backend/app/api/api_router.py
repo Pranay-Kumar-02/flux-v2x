@@ -9,6 +9,7 @@ from app.api.v1 import (
     simulator,
     benchmarks,
     health,
+    jobs,
 )
 
 api_router = APIRouter()
@@ -22,3 +23,4 @@ api_router.include_router(experiments.router)
 api_router.include_router(acafdm.router)
 api_router.include_router(simulator.router)
 api_router.include_router(benchmarks.router)
+api_router.include_router(jobs.router)

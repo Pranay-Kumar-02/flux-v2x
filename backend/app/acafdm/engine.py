@@ -21,14 +21,15 @@ class ACAFDMEngine:
         confidence_threshold: float = 0.65,
         persistence_k: int = 3,
         cooldown_ticks: int = 5,
-        benign_validation_gate: bool = True
+        benign_validation_gate: bool = True,
+        cooldown_seconds: Optional[int] = None
     ):
         self.cluster_count = cluster_count
         self.alpha = alpha_update_rate
         self.z_threshold = z_threshold
         self.confidence_threshold = confidence_threshold
         self.persistence_k = persistence_k
-        self.cooldown_ticks = cooldown_ticks
+        self.cooldown_ticks = cooldown_seconds if cooldown_seconds is not None else cooldown_ticks
         self.benign_validation_gate = benign_validation_gate
 
         self.clusterer = SpatiotemporalClusterer(n_clusters=cluster_count)

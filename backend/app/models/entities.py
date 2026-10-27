@@ -126,6 +126,7 @@ class Experiment(Base):
     dataset_version_id: Mapped[str] = mapped_column(String(36), ForeignKey("dataset_versions.id"), nullable=False)
     schema_mapping_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("schema_mappings.id"), nullable=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
+    target_column: Mapped[str] = mapped_column(String(100), default="label")
     model_family: Mapped[str] = mapped_column(String(100), nullable=False)
     hyperparameters: Mapped[dict] = mapped_column(JSON, default=dict)
     split_strategy: Mapped[str] = mapped_column(String(50), default="scenario_split")  # scenario_split, chronological, stratified

@@ -1,17 +1,38 @@
 import uuid
 import datetime
 from typing import List, Dict
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 import polars as pl
 
 from app.db.session import get_db
-from app.models.entities import SchemaMapping, DatasetVersion, Workspace
+from app.models.entities import SchemaMapping, DatasetVersion, Dataset, Workspace
 from app.schemas.api_models import SchemaMappingCreate, SchemaMappingOut
 from app.api.deps import get_current_workspace
 from app.schema_lab.vcn_adapter import VCNSchemaDefinition
 
 router = APIRouter(prefix="/schemas", tags=["Schema & Feature Lab"])
+
+
+def _get_verified_dataset_version(
+    db: Session,
+    dataset_version_id: str,
+    workspace_id: str
+) -> DatasetVersion:
+    """Verifies complete ownership chain: DatasetVersion -> Dataset -> Workspace."""
+    version = db.query(DatasetVersion).join(
+        Dataset, Dataset.id == DatasetVersion.dataset_id
+    ).filter(
+        DatasetVersion.id == dataset_version_id,
+        Dataset.workspace_id == workspace_id
+    ).first()
+
+    if not version:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Dataset version not found in the active authorized workspace."
+        )
+    return version
 
 
 @router.get("/suggest/{dataset_version_id}")
@@ -20,9 +41,7 @@ def suggest_mapping(
     workspace: Workspace = Depends(get_current_workspace),
     db: Session = Depends(get_db)
 ):
-    version = db.query(DatasetVersion).filter(DatasetVersion.id == dataset_version_id).first()
-    if not version:
-        raise HTTPException(status_code=404, detail="Dataset version not found")
+    version = _get_verified_dataset_version(db, dataset_version_id, workspace.id)
 
     df = pl.read_parquet(version.file_path)
     suggested = VCNSchemaDefinition.suggest_mapping(df.columns)
@@ -43,9 +62,7 @@ def create_schema_mapping(
     workspace: Workspace = Depends(get_current_workspace),
     db: Session = Depends(get_db)
 ):
-    version = db.query(DatasetVersion).filter(DatasetVersion.id == dataset_version_id).first()
-    if not version:
-        raise HTTPException(status_code=404, detail="Dataset version not found")
+    version = _get_verified_dataset_version(db, dataset_version_id, workspace.id)
 
     mapping_id = str(uuid.uuid4())
     rec = SchemaMapping(
@@ -80,6 +97,7 @@ def list_schema_mappings(
     workspace: Workspace = Depends(get_current_workspace),
     db: Session = Depends(get_db)
 ):
+    _get_verified_dataset_version(db, dataset_version_id, workspace.id)
     recs = db.query(SchemaMapping).filter(SchemaMapping.dataset_version_id == dataset_version_id).all()
     return [
         SchemaMappingOut(

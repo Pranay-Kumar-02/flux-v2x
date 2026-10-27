@@ -1,12 +1,14 @@
+import os
 import uuid
 import datetime
+import logging
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 import polars as pl
 
 from app.db.session import get_db
-from app.models.entities import ACAFDMConfig, DatasetVersion, Workspace
+from app.models.entities import ACAFDMConfig, DatasetVersion, Dataset, Workspace
 from app.schemas.api_models import (
     ACAFDMConfigCreate,
     ACAFDMConfigOut,
@@ -16,6 +18,7 @@ from app.schemas.api_models import (
 from app.api.deps import get_current_workspace
 from app.acafdm.engine import ACAFDMEngine
 
+logger = logging.getLogger("fluxv2x.acafdm")
 router = APIRouter(prefix="/acafdm", tags=["ACAFDM Engine"])
 
 
@@ -65,7 +68,6 @@ def list_configs(
 ):
     configs = db.query(ACAFDMConfig).filter(ACAFDMConfig.workspace_id == workspace.id).all()
     if not configs:
-        # Create default config if none
         default_cfg = ACAFDMConfig(
             id=str(uuid.uuid4()),
             workspace_id=workspace.id,
@@ -109,33 +111,61 @@ def evaluate_acafdm(
     workspace: Workspace = Depends(get_current_workspace),
     db: Session = Depends(get_db)
 ):
-    version = db.query(DatasetVersion).filter(DatasetVersion.id == dataset_version_id).first()
-    if not version:
-        raise HTTPException(status_code=404, detail="Dataset version not found")
+    # Enforce strict ownership chain: DatasetVersion -> Dataset -> Workspace
+    version = db.query(DatasetVersion).join(
+        Dataset, Dataset.id == DatasetVersion.dataset_id
+    ).filter(
+        DatasetVersion.id == dataset_version_id,
+        Dataset.workspace_id == workspace.id
+    ).first()
+
+    if not version or not os.path.exists(version.file_path):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Dataset version not found in the active authorized workspace."
+        )
 
     cfg = None
     if config_id:
-        cfg = db.query(ACAFDMConfig).filter(ACAFDMConfig.id == config_id).first()
+        cfg = db.query(ACAFDMConfig).filter(
+            ACAFDMConfig.id == config_id,
+            ACAFDMConfig.workspace_id == workspace.id
+        ).first()
+        if not cfg:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="ACAFDM config not found in the active authorized workspace."
+            )
 
     cluster_count = cfg.cluster_count if cfg else 4
-    alpha = cfg.alpha_update_rate if cfg else 0.08
-    z_thresh = cfg.z_threshold if cfg else 2.5
+    alpha_update_rate = cfg.alpha_update_rate if cfg else 0.08
+    z_threshold = cfg.z_threshold if cfg else 2.5
     persistence_k = cfg.persistence_k if cfg else 3
-    gate = cfg.benign_validation_gate if cfg else True
+    cooldown_seconds = cfg.cooldown_seconds if cfg else 30
+    benign_validation_gate = cfg.benign_validation_gate if cfg else True
 
-    df = pl.read_parquet(version.file_path)
+    try:
+        df = pl.read_parquet(version.file_path)
+    except Exception as e:
+        logger.error(f"Failed to read parquet for ACAFDM evaluation: {e}", exc_info=True)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to load dataset records.")
 
     engine = ACAFDMEngine(
         cluster_count=cluster_count,
-        alpha_update_rate=alpha,
-        z_threshold=z_thresh,
+        alpha_update_rate=alpha_update_rate,
+        z_threshold=z_threshold,
         persistence_k=persistence_k,
-        benign_validation_gate=gate
+        cooldown_seconds=cooldown_seconds,
+        benign_validation_gate=benign_validation_gate
     )
 
-    result = engine.process_trace(df)
+    try:
+        result = engine.process_trace(df)
+    except Exception as e:
+        logger.error(f"Sequential ACAFDM trace evaluation failed: {e}", exc_info=True)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to execute ACAFDM sequential evaluation.")
 
-    trace_records = [
+    decision_records = [
         ACAFDMDecisionRecord(
             index=r["index"],
             timestamp=r["timestamp"],
@@ -155,12 +185,12 @@ def evaluate_acafdm(
     ]
 
     return ACAFDMRunResult(
-        config_id=config_id or "default",
+        config_id=cfg.id if cfg else "default_policy",
         total_observations=result["total_observations"],
         mitigated_count=result["mitigated_count"],
         flagged_suspicious_count=result["flagged_suspicious_count"],
         allowed_count=result["allowed_count"],
         baseline_updates_accepted=result["baseline_updates_accepted"],
         baseline_updates_rejected_poison_prevented=result["baseline_updates_rejected_poison_prevented"],
-        decision_trace=trace_records
+        decision_trace=decision_records
     )

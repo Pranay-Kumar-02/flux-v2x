@@ -1,24 +1,35 @@
+import os
 import hashlib
 import hmac
-import os
-import json
-import base64
 import time
 from typing import Any, Union, Dict, Optional
+import jwt
+from jwt.exceptions import PyJWTError, ExpiredSignatureError, InvalidTokenError
+
 from app.core.config import settings
 
 
 def hash_password(password: str) -> str:
-    """Hash password using PBKDF2-HMAC-SHA256 with random salt."""
+    """
+    Hash password using PBKDF2-HMAC-SHA256 with a 16-byte cryptographically secure salt
+    and 100,000 iterations (OWASP recommended standard).
+    """
+    if not password:
+        raise ValueError("Password cannot be empty")
     salt = os.urandom(16)
     key = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 100_000)
     return f"{salt.hex()}:{key.hex()}"
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify password against stored salt:hash."""
+    """Verify password against stored salt:hash using constant-time comparison."""
+    if not plain_password or not hashed_password:
+        return False
     try:
-        salt_hex, key_hex = hashed_password.split(":")
+        parts = hashed_password.split(":")
+        if len(parts) != 2:
+            return False
+        salt_hex, key_hex = parts
         salt = bytes.fromhex(salt_hex)
         expected_key = bytes.fromhex(key_hex)
         actual_key = hashlib.pbkdf2_hmac("sha256", plain_password.encode("utf-8"), salt, 100_000)
@@ -27,53 +38,54 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         return False
 
 
-def _base64url_encode(data: bytes) -> str:
-    return base64.urlsafe_b64encode(data).decode("utf-8").rstrip("=")
-
-
-def _base64url_decode(s: str) -> bytes:
-    padding = 4 - (len(s) % 4)
-    if padding and padding != 4:
-        s += "=" * padding
-    return base64.urlsafe_b64decode(s.encode("utf-8"))
-
-
-def create_access_token(subject: Union[str, Any], expires_delta_seconds: Optional[int] = None) -> str:
-    """Generate tamper-proof HMAC-SHA256 JWT access token."""
-    header = {"alg": "HS256", "typ": "JWT"}
+def create_access_token(
+    subject: Union[str, Any],
+    expires_delta_seconds: Optional[int] = None,
+    extra_claims: Optional[Dict[str, Any]] = None
+) -> str:
+    """
+    Generate standards-compliant JWT access token signed with HMAC-SHA256.
+    Includes subject, issued-at, and expiration claims.
+    """
     now = int(time.time())
-    exp = now + (expires_delta_seconds if expires_delta_seconds else settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60)
-    payload = {"sub": str(subject), "iat": now, "exp": exp}
+    if expires_delta_seconds is not None:
+        exp = now + expires_delta_seconds
+    else:
+        exp = now + (settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60)
 
-    header_b64 = _base64url_encode(json.dumps(header, separators=(",", ":")).encode("utf-8"))
-    payload_b64 = _base64url_encode(json.dumps(payload, separators=(",", ":")).encode("utf-8"))
-    signing_input = f"{header_b64}.{payload_b64}".encode("utf-8")
-    signature = hmac.new(settings.SECRET_KEY.encode("utf-8"), signing_input, hashlib.sha256).digest()
-    sig_b64 = _base64url_encode(signature)
+    payload: Dict[str, Any] = {
+        "sub": str(subject),
+        "iat": now,
+        "exp": exp,
+    }
+    if extra_claims:
+        payload.update(extra_claims)
 
-    return f"{header_b64}.{payload_b64}.{sig_b64}"
+    token = jwt.encode(
+        payload,
+        settings.SECRET_KEY,
+        algorithm=settings.JWT_ALGORITHM
+    )
+    return token
 
 
 def decode_access_token(token: str) -> Optional[Dict[str, Any]]:
-    """Decode and verify JWT signature and expiration."""
+    """
+    Decode and cryptographically verify JWT token signature, expiration,
+    and required claims using PyJWT.
+    Returns None if signature is invalid, token is expired, or claims are malformed.
+    """
+    if not token or not isinstance(token, str):
+        return None
     try:
-        parts = token.split(".")
-        if len(parts) != 3:
-            return None
-        header_b64, payload_b64, sig_b64 = parts
-        signing_input = f"{header_b64}.{payload_b64}".encode("utf-8")
-        expected_sig = hmac.new(settings.SECRET_KEY.encode("utf-8"), signing_input, hashlib.sha256).digest()
-        actual_sig = _base64url_decode(sig_b64)
-
-        if not hmac.compare_digest(expected_sig, actual_sig):
-            return None
-
-        payload_bytes = _base64url_decode(payload_b64)
-        payload = json.loads(payload_bytes.decode("utf-8"))
-
-        if payload.get("exp", 0) < int(time.time()):
-            return None
-
+        payload = jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[settings.JWT_ALGORITHM],
+            options={"require": ["exp", "iat", "sub"]}
+        )
         return payload
+    except (ExpiredSignatureError, InvalidTokenError, PyJWTError):
+        return None
     except Exception:
         return None

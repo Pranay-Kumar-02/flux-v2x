@@ -2,16 +2,18 @@ import os
 import uuid
 import time
 import datetime
+import logging
 import joblib
-from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from typing import List, Optional, Dict, Any
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 import polars as pl
 import numpy as np
 
 from app.db.session import get_db
 from app.core.config import settings
-from app.models.entities import Experiment, ModelArtifact, DatasetVersion, Workspace
+from app.models.entities import Experiment, ModelArtifact, DatasetVersion, Dataset, Workspace
 from app.schemas.api_models import ExperimentCreate, ExperimentOut
 from app.api.deps import get_current_workspace
 from app.ml.spatiotemporal import SpatiotemporalClusterer
@@ -21,11 +23,24 @@ from app.ml.splits import SplitEngine
 from app.ml.models import ModelFactory
 from app.ml.evaluation import EvaluationEngine
 from app.ingestion.parser import IngestionEngine
+from app.workers.task_runner import TaskRunner
 
+logger = logging.getLogger("fluxv2x.experiments")
 router = APIRouter(prefix="/experiments", tags=["Model Laboratory & Experiments"])
 
 
-def _run_experiment_sync(exp_id: str, db: Session):
+def _run_experiment_async(
+    job_id: str,
+    db: Session,
+    cancel_event,
+    exp_id: str,
+    version_file_path: str,
+    exp_in_dict: Dict[str, Any]
+):
+    """
+    Dedicated background worker task for model training.
+    Executes in a separate thread/process with its own isolated DB session.
+    """
     exp = db.query(Experiment).filter(Experiment.id == exp_id).first()
     if not exp:
         return
@@ -35,20 +50,25 @@ def _run_experiment_sync(exp_id: str, db: Session):
     t0 = time.time()
 
     try:
-        version = db.query(DatasetVersion).filter(DatasetVersion.id == exp.dataset_version_id).first()
-        if not version or not os.path.exists(version.file_path):
-            raise ValueError("Dataset version file not found")
+        TaskRunner.update_progress(job_id, 15, {"stage": "loading_data"})
+        if cancel_event.is_set():
+            return
 
-        df = pl.read_parquet(version.file_path)
+        if not os.path.exists(version_file_path):
+            raise FileNotFoundError(f"Dataset version file not found at: {version_file_path}")
 
-        # Ensure receiver window enrichments
+        df = pl.read_parquet(version_file_path)
+
+        # Receiver window temporal enrichment
+        TaskRunner.update_progress(job_id, 30, {"stage": "session_and_window_aggregation"})
         df = SessionBuilder.enrich_receiver_windows(df)
 
         is_contextual = "contextual" in exp.model_family or exp.model_family in [
             "random_forest", "extra_trees", "adaboost", "decision_tree", "knn", "logistic_regression", "svc_linear", "svc_rbf"
         ]
 
-        # 1. Leakage-safe train-test split
+        # 1. Leakage-safe train-test split (fitted exclusively on permitted partition)
+        TaskRunner.update_progress(job_id, 45, {"stage": "leakage_safe_partitioning"})
         train_df, test_df, split_meta = SplitEngine.split(
             df,
             strategy=exp.split_strategy,
@@ -59,7 +79,7 @@ def _run_experiment_sync(exp_id: str, db: Session):
 
         cluster_col = "cluster_id"
         if is_contextual:
-            # Fit spatiotemporal clusterer STRICTLY on train partition
+            # Fit spatiotemporal clusterer STRICTLY on train partition to eliminate leakage
             clusterer = SpatiotemporalClusterer(n_clusters=4, random_state=exp.random_seed)
             train_clusters, _ = clusterer.fit_predict(train_df)
             train_df = train_df.with_columns(pl.Series(cluster_col, train_clusters))
@@ -75,10 +95,20 @@ def _run_experiment_sync(exp_id: str, db: Session):
             train_df = baseline_engine.transform(train_df, cluster_col=cluster_col)
             test_df = baseline_engine.transform(test_df, cluster_col=cluster_col)
 
-        # Feature selection
-        features = ModelFactory.get_feature_columns(exp.model_family, train_df.columns)
-        if not features:
-            features = [c for c in train_df.columns if train_df[c].dtype.is_numeric() and c != "label"]
+        if cancel_event.is_set():
+            return
+
+        # Feature selection with strict target leakage exclusion
+        target_name = exp.target_column.strip().lower()
+        forbidden_leakage_names = {target_name, "label", "is_malicious", "attack", "ground_truth"}
+
+        user_features = exp_in_dict.get("features", [])
+        if user_features:
+            features = [f for f in user_features if f.lower() not in forbidden_leakage_names]
+        else:
+            features = ModelFactory.get_feature_columns(exp.model_family, train_df.columns)
+            if not features:
+                features = [c for c in train_df.columns if train_df[c].dtype.is_numeric() and c.lower() not in forbidden_leakage_names]
 
         X_train = train_df.select(features).to_numpy()
         X_train = np.nan_to_num(X_train, nan=0.0)
@@ -87,6 +117,10 @@ def _run_experiment_sync(exp_id: str, db: Session):
         X_test = test_df.select(features).to_numpy()
         X_test = np.nan_to_num(X_test, nan=0.0)
         y_test = test_df["label"].to_numpy() if "label" in test_df.columns else np.zeros(len(X_test))
+
+        TaskRunner.update_progress(job_id, 65, {"stage": "model_fitting", "features_count": len(features)})
+        if cancel_event.is_set():
+            return
 
         # Model creation & training
         model = ModelFactory.create_model(
@@ -110,6 +144,10 @@ def _run_experiment_sync(exp_id: str, db: Session):
             else:
                 y_prob = y_pred.astype(float)
 
+        TaskRunner.update_progress(job_id, 85, {"stage": "evaluating_metrics"})
+        if cancel_event.is_set():
+            return
+
         # Evaluation metrics
         metrics = EvaluationEngine.compute_metrics(y_test, y_pred, y_prob)
         metrics["features_used"] = features
@@ -117,7 +155,7 @@ def _run_experiment_sync(exp_id: str, db: Session):
         metrics["train_samples"] = len(X_train)
         metrics["test_samples"] = len(X_test)
 
-        # Persist model artifact
+        # Persist model artifact securely
         os.makedirs(settings.ARTIFACTS_STORAGE_PATH, exist_ok=True)
         artifact_path = os.path.join(settings.ARTIFACTS_STORAGE_PATH, f"{exp.id}.joblib")
         joblib.dump(model, artifact_path)
@@ -141,12 +179,17 @@ def _run_experiment_sync(exp_id: str, db: Session):
         exp.finished_at = datetime.datetime.utcnow()
         db.commit()
 
+        TaskRunner.update_progress(job_id, 100, {"stage": "completed", "duration_seconds": exp.duration_seconds})
+        return {"experiment_id": exp.id, "metrics": metrics}
+
     except Exception as e:
+        logger.error(f"Experiment {exp_id} execution failed: {e}", exc_info=True)
         exp.status = "failed"
         exp.error_message = f"{type(e).__name__}: {str(e)}"
         exp.duration_seconds = round(time.time() - t0, 3)
         exp.finished_at = datetime.datetime.utcnow()
         db.commit()
+        raise
 
 
 @router.post("", response_model=ExperimentOut)
@@ -155,17 +198,41 @@ def launch_experiment(
     workspace: Workspace = Depends(get_current_workspace),
     db: Session = Depends(get_db)
 ):
-    version = db.query(DatasetVersion).filter(DatasetVersion.id == exp_in.dataset_version_id).first()
+    """
+    Submits an asynchronous model training experiment job.
+    Enforces complete dataset ownership validation and target leakage prevention.
+    Returns immediately with 'queued' status and background job tracking.
+    """
+    # 1. Verify dataset version ownership chain
+    version = db.query(DatasetVersion).join(
+        Dataset, Dataset.id == DatasetVersion.dataset_id
+    ).filter(
+        DatasetVersion.id == exp_in.dataset_version_id,
+        Dataset.workspace_id == workspace.id
+    ).first()
+
     if not version:
-        raise HTTPException(status_code=404, detail="Dataset version not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Dataset version not found in the active authorized workspace."
+        )
+
+    # 2. Prevent target leakage: target column must not be in features
+    target_clean = exp_in.target_column.strip().lower()
+    for feat in exp_in.features:
+        if feat.strip().lower() == target_clean or feat.strip().lower() in ("label", "is_malicious", "attack", "ground_truth"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Target leakage prohibited: Feature '{feat}' cannot be or derive directly from target '{exp_in.target_column}'."
+            )
 
     exp_id = str(uuid.uuid4())
     exp = Experiment(
         id=exp_id,
         workspace_id=workspace.id,
         dataset_version_id=exp_in.dataset_version_id,
-        schema_mapping_id=exp_in.schema_mapping_id,
         name=exp_in.name,
+        target_column=exp_in.target_column,
         model_family=exp_in.model_family,
         hyperparameters=exp_in.hyperparameters,
         split_strategy=exp_in.split_strategy,
@@ -176,10 +243,17 @@ def launch_experiment(
     )
     db.add(exp)
     db.commit()
-
-    # Run synchronously or in threadpool for quick feedback
-    _run_experiment_sync(exp_id, db)
     db.refresh(exp)
+
+    # 3. Submit real asynchronous background task
+    job_id = TaskRunner.submit_task(
+        workspace_id=workspace.id,
+        job_type="model_training",
+        target_fn=_run_experiment_async,
+        exp_id=exp.id,
+        version_file_path=version.file_path,
+        exp_in_dict=exp_in.model_dump()
+    )
 
     return ExperimentOut(
         id=exp.id,
@@ -187,6 +261,7 @@ def launch_experiment(
         dataset_version_id=exp.dataset_version_id,
         schema_mapping_id=exp.schema_mapping_id,
         name=exp.name,
+        target_column=exp.target_column,
         model_family=exp.model_family,
         hyperparameters=exp.hyperparameters,
         split_strategy=exp.split_strategy,
@@ -207,6 +282,7 @@ def list_experiments(
     workspace: Workspace = Depends(get_current_workspace),
     db: Session = Depends(get_db)
 ):
+    """List all experiments scoped strictly to the current workspace."""
     experiments = db.query(Experiment).filter(
         Experiment.workspace_id == workspace.id
     ).order_by(Experiment.created_at.desc()).all()
@@ -218,6 +294,7 @@ def list_experiments(
             dataset_version_id=e.dataset_version_id,
             schema_mapping_id=e.schema_mapping_id,
             name=e.name,
+            target_column=e.target_column,
             model_family=e.model_family,
             hyperparameters=e.hyperparameters,
             split_strategy=e.split_strategy,
@@ -241,12 +318,17 @@ def get_experiment(
     workspace: Workspace = Depends(get_current_workspace),
     db: Session = Depends(get_db)
 ):
+    """Retrieve experiment details ensuring workspace isolation."""
     exp = db.query(Experiment).filter(
         Experiment.id == experiment_id,
         Experiment.workspace_id == workspace.id
     ).first()
+
     if not exp:
-        raise HTTPException(status_code=404, detail="Experiment not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Experiment not found in active workspace."
+        )
 
     return ExperimentOut(
         id=exp.id,
@@ -254,6 +336,7 @@ def get_experiment(
         dataset_version_id=exp.dataset_version_id,
         schema_mapping_id=exp.schema_mapping_id,
         name=exp.name,
+        target_column=exp.target_column,
         model_family=exp.model_family,
         hyperparameters=exp.hyperparameters,
         split_strategy=exp.split_strategy,
@@ -267,3 +350,39 @@ def get_experiment(
         created_at=exp.created_at,
         finished_at=exp.finished_at
     )
+
+
+@router.get("/{experiment_id}/export")
+def export_experiment(
+    experiment_id: str,
+    workspace: Workspace = Depends(get_current_workspace),
+    db: Session = Depends(get_db)
+):
+    """Export complete reproducibility artifact for an experiment."""
+    exp = db.query(Experiment).filter(
+        Experiment.id == experiment_id,
+        Experiment.workspace_id == workspace.id
+    ).first()
+
+    if not exp:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Experiment not found in active workspace."
+        )
+
+    payload = {
+        "experiment_id": exp.id,
+        "workspace_id": exp.workspace_id,
+        "name": exp.name,
+        "model_family": exp.model_family,
+        "split_strategy": exp.split_strategy,
+        "hyperparameters": exp.hyperparameters,
+        "random_seed": exp.random_seed,
+        "status": exp.status,
+        "duration_seconds": exp.duration_seconds,
+        "created_at": exp.created_at.isoformat(),
+        "finished_at": exp.finished_at.isoformat() if exp.finished_at else None,
+        "metrics": exp.metrics,
+        "confusion_matrix": exp.confusion_matrix,
+    }
+    return JSONResponse(content=payload)

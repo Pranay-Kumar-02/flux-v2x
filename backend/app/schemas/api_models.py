@@ -136,6 +136,8 @@ class ExperimentCreate(BaseModel):
     dataset_version_id: str
     schema_mapping_id: Optional[str] = None
     name: str
+    target_column: str = "label"
+    features: List[str] = Field(default_factory=list)
     model_family: str  # e.g., "contextual_gradient_boosting", "raw_gradient_boosting", "random_forest", etc.
     hyperparameters: Dict[str, Any] = Field(default_factory=dict)
     split_strategy: str = "scenario_split"  # scenario_split, chronological, stratified
@@ -147,20 +149,21 @@ class ExperimentOut(BaseModel):
     id: str
     workspace_id: str
     dataset_version_id: str
-    schema_mapping_id: Optional[str]
+    schema_mapping_id: Optional[str] = None
     name: str
+    target_column: Optional[str] = "label"
     model_family: str
     hyperparameters: Dict[str, Any]
     split_strategy: str
     test_size: float
     random_seed: int
     status: str
-    error_message: Optional[str]
-    metrics: Optional[Dict[str, Any]]
-    confusion_matrix: Optional[Dict[str, Any]]
+    error_message: Optional[str] = None
+    metrics: Optional[Dict[str, Any]] = None
+    confusion_matrix: Optional[Dict[str, Any]] = None
     duration_seconds: float
     created_at: datetime.datetime
-    finished_at: Optional[datetime.datetime]
+    finished_at: Optional[datetime.datetime] = None
 
 
 class PairedMcNemarResult(BaseModel):

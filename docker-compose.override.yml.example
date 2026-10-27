@@ -1,0 +1,12 @@
+# Development Override Example
+# Copy to `docker-compose.override.yml` to publish Postgres port 5432 locally during local dev
+version: '3.8'
+
+services:
+  postgres:
+    ports:
+      - "5432:5432"
+
+  redis:
+    ports:
+      - "6379:6379"

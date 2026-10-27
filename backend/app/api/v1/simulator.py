@@ -1,16 +1,19 @@
+import os
 import uuid
 import datetime
+import logging
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 import polars as pl
 
 from app.db.session import get_db
-from app.models.entities import MitigationSimulation, DatasetVersion, Workspace, ACAFDMConfig
+from app.models.entities import MitigationSimulation, DatasetVersion, Dataset, Workspace, ACAFDMConfig
 from app.schemas.api_models import MitigationSimulationCreate, MitigationSimulationOut
 from app.api.deps import get_current_workspace
 from app.simulation.simulator import MitigationSimulator
 
+logger = logging.getLogger("fluxv2x.simulator")
 router = APIRouter(prefix="/simulator", tags=["Mitigation Simulator"])
 
 
@@ -20,29 +23,55 @@ def run_simulation(
     workspace: Workspace = Depends(get_current_workspace),
     db: Session = Depends(get_db)
 ):
-    version = db.query(DatasetVersion).filter(DatasetVersion.id == sim_in.dataset_version_id).first()
-    if not version:
-        raise HTTPException(status_code=404, detail="Dataset version not found")
+    # Enforce strict ownership: DatasetVersion -> Dataset -> Workspace
+    version = db.query(DatasetVersion).join(
+        Dataset, Dataset.id == DatasetVersion.dataset_id
+    ).filter(
+        DatasetVersion.id == sim_in.dataset_version_id,
+        Dataset.workspace_id == workspace.id
+    ).first()
+
+    if not version or not os.path.exists(version.file_path):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Dataset version not found in active authorized workspace."
+        )
 
     cfg = None
     if sim_in.acafdm_config_id:
-        cfg = db.query(ACAFDMConfig).filter(ACAFDMConfig.id == sim_in.acafdm_config_id).first()
+        cfg = db.query(ACAFDMConfig).filter(
+            ACAFDMConfig.id == sim_in.acafdm_config_id,
+            ACAFDMConfig.workspace_id == workspace.id
+        ).first()
+        if not cfg:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="ACAFDM config not found in active authorized workspace."
+            )
 
     cluster_count = cfg.cluster_count if cfg else 4
     z_thresh = cfg.z_threshold if cfg else 2.5
     persistence_k = cfg.persistence_k if cfg else 3
 
-    df = pl.read_parquet(version.file_path)
+    try:
+        df = pl.read_parquet(version.file_path)
+    except Exception as e:
+        logger.error(f"Failed to read parquet for simulation: {e}", exc_info=True)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to load dataset records.")
 
-    results = MitigationSimulator.run_simulation(
-        df=df,
-        policy_action=sim_in.policy_action,
-        rate_limit_ratio=sim_in.rate_limit_ratio,
-        priority_preservation=sim_in.priority_preservation,
-        cluster_count=cluster_count,
-        z_threshold=z_thresh,
-        persistence_k=persistence_k
-    )
+    try:
+        results = MitigationSimulator.run_simulation(
+            df=df,
+            policy_action=sim_in.policy_action,
+            rate_limit_ratio=sim_in.rate_limit_ratio,
+            priority_preservation=sim_in.priority_preservation,
+            cluster_count=cluster_count,
+            z_threshold=z_thresh,
+            persistence_k=persistence_k
+        )
+    except Exception as e:
+        logger.error(f"Simulation execution failed: {e}", exc_info=True)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to execute mitigation simulation.")
 
     sim_id = str(uuid.uuid4())
     sim_rec = MitigationSimulation(
@@ -77,6 +106,7 @@ def run_simulation(
     )
 
 
+@router.get("", response_model=List[MitigationSimulationOut])
 @router.get("/list", response_model=List[MitigationSimulationOut])
 def list_simulations(
     workspace: Workspace = Depends(get_current_workspace),
@@ -99,6 +129,37 @@ def list_simulations(
             status=s.status,
             results=s.results,
             created_at=s.created_at
-        )
-        for s in sims
+        ) for s in sims
     ]
+
+
+@router.get("/{simulation_id}", response_model=MitigationSimulationOut)
+def get_simulation_run(
+    simulation_id: str,
+    workspace: Workspace = Depends(get_current_workspace),
+    db: Session = Depends(get_db)
+):
+    sim = db.query(MitigationSimulation).filter(
+        MitigationSimulation.id == simulation_id,
+        MitigationSimulation.workspace_id == workspace.id
+    ).first()
+
+    if not sim:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Simulation run not found in active workspace."
+        )
+
+    return MitigationSimulationOut(
+        id=sim.id,
+        workspace_id=sim.workspace_id,
+        dataset_version_id=sim.dataset_version_id,
+        acafdm_config_id=sim.acafdm_config_id,
+        name=sim.name,
+        policy_action=sim.policy_action,
+        rate_limit_ratio=sim.rate_limit_ratio,
+        priority_preservation=sim.priority_preservation,
+        status=sim.status,
+        results=sim.results,
+        created_at=sim.created_at
+    )

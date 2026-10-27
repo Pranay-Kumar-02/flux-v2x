@@ -59,8 +59,8 @@ export interface Experiment {
   id: string;
   workspace_id: string;
   dataset_version_id: string;
-  schema_mapping_id?: string;
   name: string;
+  target_column: string;
   model_family: string;
   hyperparameters: Record<string, any>;
   split_strategy: string;
@@ -69,12 +69,7 @@ export interface Experiment {
   status: string;
   error_message?: string;
   metrics?: Record<string, any>;
-  confusion_matrix?: {
-    true_negative: number;
-    false_positive: number;
-    false_negative: number;
-    true_positive: number;
-  };
+  confusion_matrix?: Record<string, any>;
   duration_seconds: number;
   created_at: string;
   finished_at?: string;
@@ -83,10 +78,12 @@ export interface Experiment {
 export interface PairedMcNemarResult {
   model_a_name: string;
   model_b_name: string;
+  total_paired_samples?: number;
   contingency_table: number[][];
   statistic: number;
   p_value: number;
   is_significant: boolean;
+  statistically_significant?: boolean;
   interpretation: string;
 }
 
@@ -112,23 +109,31 @@ export interface ACAFDMDecisionRecord {
   raw_rate: number;
   baseline_rate: number;
   z_score: number;
-  model_score: number;
   confidence: number;
   persistence_count: number;
   decision: string;
-  reason: string;
   baseline_updated: boolean;
+  reason?: string;
+  model_score?: number;
 }
 
 export interface ACAFDMRunResult {
-  config_id: string;
+  config_id?: string;
+  config_name?: string;
   total_observations: number;
-  mitigated_count: number;
-  flagged_suspicious_count: number;
+  total_evaluations?: number;
   allowed_count: number;
+  flagged_suspicious_count: number;
+  mitigated_count: number;
   baseline_updates_accepted: number;
   baseline_updates_rejected_poison_prevented: number;
+  rolling_baselines_final?: Record<string, any>;
   decision_trace: ACAFDMDecisionRecord[];
+  action_breakdown?: Record<string, number>;
+  poison_updates_blocked?: number;
+  false_positives_mitigated?: number;
+  attack_records_detected?: number;
+  sample_decisions?: ACAFDMDecisionRecord[];
 }
 
 export interface MitigationSimulation {
@@ -145,6 +150,18 @@ export interface MitigationSimulation {
   created_at: string;
 }
 
+export interface BackgroundJob {
+  id: string;
+  workspace_id: string;
+  job_type: string;
+  status: string;
+  progress_pct: number;
+  error_message?: string;
+  result_metadata?: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface SystemStats {
   total_datasets: number;
   total_records: number;
@@ -158,13 +175,59 @@ export interface SystemStats {
   database_status: string;
 }
 
+export interface UserProfile {
+  id: string;
+  email: string;
+  full_name: string;
+  is_active: boolean;
+  is_superuser: boolean;
+  created_at: string;
+}
+
+export interface WorkspaceItem {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  owner_id: string;
+  created_at: string;
+}
+
+export function getAuthToken(): string | null {
+  return localStorage.getItem('fluxv2x_access_token');
+}
+
+export function setAuthToken(token: string): void {
+  localStorage.setItem('fluxv2x_access_token', token);
+}
+
+export function getActiveWorkspaceId(): string | null {
+  return localStorage.getItem('fluxv2x_workspace_id');
+}
+
+export function setActiveWorkspaceId(workspaceId: string): void {
+  localStorage.setItem('fluxv2x_workspace_id', workspaceId);
+}
+
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
+  const token = getAuthToken();
+  const workspaceId = getActiveWorkspaceId();
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options?.headers as Record<string, string> || {}),
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  if (workspaceId) {
+    headers['X-Workspace-Id'] = workspaceId;
+  }
+
   const res = await fetch(`${API_BASE}${url}`, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options?.headers || {}),
-    },
+    headers,
   });
 
   if (!res.ok) {
@@ -180,6 +243,42 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  // Authentication
+  login: async (email: string, password: string) => {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Authentication failed' }));
+      throw new Error(err.detail || 'Authentication failed');
+    }
+    const data = await res.json();
+    setAuthToken(data.access_token);
+    return data;
+  },
+
+  register: async (email: string, password: string, fullName: string) => {
+    const res = await fetch(`${API_BASE}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, full_name: fullName }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Registration failed' }));
+      throw new Error(err.detail || 'Registration failed');
+    }
+    const data = await res.json();
+    setAuthToken(data.access_token);
+    return data;
+  },
+
+  getMe: () => request<UserProfile>('/auth/me'),
+  getWorkspaces: () => request<WorkspaceItem[]>('/auth/workspaces'),
+  createWorkspace: (name: string, description?: string) =>
+    request<WorkspaceItem>('/auth/workspaces', { method: 'POST', body: JSON.stringify({ name, description }) }),
+
   // System Health & Stats
   getHealth: () => request<{ status: string; database: string; version: string }>('/health'),
   getSystemStats: () => request<SystemStats>('/system/stats'),
@@ -191,8 +290,15 @@ export const api = {
     request<DatasetPreview>(`/datasets/${id}/preview?offset=${offset}&limit=${limit}`),
   getDatasetProfile: (id: string) => request<DatasetProfile>(`/datasets/${id}/profile`),
   uploadDataset: async (formData: FormData): Promise<Dataset> => {
+    const token = getAuthToken();
+    const workspaceId = getActiveWorkspaceId();
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    if (workspaceId) headers['X-Workspace-Id'] = workspaceId;
+
     const res = await fetch(`${API_BASE}/datasets/upload`, {
       method: 'POST',
+      headers,
       body: formData,
     });
     if (!res.ok) {
@@ -228,6 +334,8 @@ export const api = {
   launchExperiment: (payload: {
     dataset_version_id: string;
     name: string;
+    target_column?: string;
+    features?: string[];
     model_family: string;
     split_strategy: string;
     test_size?: number;
@@ -249,6 +357,7 @@ export const api = {
     request<ACAFDMRunResult>(`/acafdm/evaluate/${versionId}${configId ? `?config_id=${configId}` : ''}`, { method: 'POST' }),
 
   // Mitigation Simulator
+  listMitigationSimulations: () => request<MitigationSimulation[]>('/simulator/list'),
   runMitigationSimulation: (payload: {
     dataset_version_id: string;
     name: string;
@@ -257,5 +366,9 @@ export const api = {
     priority_preservation?: boolean;
     acafdm_config_id?: string;
   }) => request<MitigationSimulation>('/simulator/run', { method: 'POST', body: JSON.stringify(payload) }),
-  listMitigationSimulations: () => request<MitigationSimulation[]>('/simulator/list'),
+
+  // Background Jobs
+  listJobs: () => request<BackgroundJob[]>('/jobs'),
+  getJob: (jobId: string) => request<BackgroundJob>(`/jobs/${jobId}`),
+  cancelJob: (jobId: string) => request<{ message: string }>(`/jobs/${jobId}/cancel`, { method: 'POST' }),
 };
