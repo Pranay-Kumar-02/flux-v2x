@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fluxv2x-postgres
+    environment:
+      POSTGRES_DB: fluxv2x_db
+      POSTGRES_USER: fluxv2x_user
+      POSTGRES_PASSWORD: fluxv2x_secure_password_replace_in_prod
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fluxv2x_user -d fluxv2x_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fluxv2x-backend
+    environment:
+      DATABASE_URL: postgresql+psycopg2://fluxv2x_user:fluxv2x_secure_password_replace_in_prod@postgres:5432/fluxv2x_db
+      ENVIRONMENT: production
+      DEBUG: "false"
+      SECRET_KEY: fluxv2x-production-secret-key-32-bytes-minimum-string
+      ALLOWED_ORIGINS: "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173"
+      AUTO_LOAD_DEMO_DATASET: "true"
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./data:/app/data
+      - ./artifacts:/app/artifacts
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: fluxv2x-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
