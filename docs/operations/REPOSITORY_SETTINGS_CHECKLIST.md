@@ -22,31 +22,35 @@ This checklist distinguishes **automated repository configurations** from **manu
 
 The repository owner must verify or configure the following settings under `https://github.com/Pranay-Kumar-02/flux-v2x/settings`:
 
-### 2.1 Branch Protection / Repository Rulesets (`Settings > Branches`)
-For branch `main`:
+### 2.1 Branch Protection / Repository Rulesets (`Settings > Rules > Rulesets` or `Settings > Branches`)
+For target branch `main`:
 - [ ] **Require a pull request before merging**: Prevent direct pushes to `main`.
-- [ ] **Require approvals**: Set to at least 1 review approval.
+- [ ] **Require approvals**: Set to 1 review approval (or allow maintainer bypass if single-maintainer model).
+- [ ] **Require conversation resolution**: Require all conversation threads to be resolved prior to merging.
 - [ ] **Require status checks to pass before merging**:
   - `Backend Pytest & Quality Suite (3.11)`
   - `Backend Pytest & Quality Suite (3.12)`
   - `Frontend TypeScript & Production Build`
   - `Docker Compose Syntax & Configuration Verification`
-- [ ] **Require branches to be up to date before merging**: Enforce rebase or fast-forward merges.
+  - `CodeQL Static Security Analysis`
+  - `Dependency Review`
+- [ ] **Require branches to be up to date before merging**: Enforce testing against latest `main` commit.
 - [ ] **Do not allow force pushes**: Block `git push --force`.
 - [ ] **Do not allow deletions**: Prevent accidental branch deletion.
 
 ### 2.2 Security & Analysis (`Settings > Code security and analysis`)
-- [ ] **Private vulnerability reporting**: Enable to allow external security researchers to privately disclose vulnerabilities without public issues.
-- [ ] **Dependency graph**: Enabled (required for Dependabot).
+- [ ] **Private vulnerability reporting**: Enabled (allows external researchers to privately disclose vulnerabilities).
+- [ ] **Dependency graph**: Enabled (prerequisite for Dependabot and Dependency Review Action).
 - [ ] **Dependabot alerts**: Enabled.
 - [ ] **Dependabot security updates**: Enabled.
-- [ ] **Secret scanning**: Enabled (detects accidentally committed tokens).
-- [ ] **Secret scanning push protection**: Enabled (blocks pushes containing recognized credential patterns).
+- [ ] **Secret scanning**: Enabled.
+- [ ] **Secret scanning push protection**: Enabled (blocks pushes containing credentials).
 
-### 2.3 General Repository Settings (`Settings > General`)
-- [ ] **Repository Description**:
-  `FluxV2X: An extensible data engineering and network security platform for structured-data analysis, contextual anomaly detection, reproducible ML experiments, and vehicular communication security.`
-- [ ] **Website URL**: `https://github.com/Pranay-Kumar-02/flux-v2x`
-- [ ] **Topics**: `network-security`, `v2x`, `anomaly-detection`, `acafdm`, `machine-learning`, `reproducible-research`, `vanet`, `data-engineering`.
+### 2.3 General Repository Settings (`About` section and `Settings > General`)
+- [ ] **Repository Description** (in the GitHub `About` cog on repository home):
+  `An extensible network security platform for contextual anomaly detection, reproducible ML experiments, vehicular communication analysis, and defensive-policy simulation.`
+- [ ] **Topics** (11 official topics):
+  `network-security`, `cybersecurity`, `anomaly-detection`, `machine-learning`, `vehicular-networks`, `data-engineering`, `research-platform`, `fastapi`, `react`, `python`, `typescript`
+- [ ] **Website URL**: Leave empty unless an active production deployment URL exists (do not invent placeholder domains).
 - [ ] **Pull Requests**: Enable "Automatically delete head branches" upon merge.
-- [ ] **Discussions**: Enable GitHub Discussions for community Q&A and architecture discussions.
+- [ ] **Discussions**: Enabled for community Q&A and architecture discussions.

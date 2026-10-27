@@ -1,8 +1,9 @@
 [project]
 name = "fluxv2x-backend"
-version = "0.1.0"
+version = "0.2.0"
 description = "FluxV2X: Adaptive Context-Aware Malicious Flooding Detection and Mitigation (ACAFDM) Engine"
 readme = "README.md"
+license = { text = "Apache-2.0" }
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115.0",
