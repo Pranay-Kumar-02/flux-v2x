@@ -46,7 +46,7 @@ jobs:
           tar -czf fluxv2x-frontend-dist.tar.gz -C frontend/dist .
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             fluxv2x-frontend-dist.tar.gz
