@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ReactECharts from 'echarts-for-react';
+import { Compass, Sparkles, Layers } from 'lucide-react';
 import { api, Dataset } from '../api/client';
 
 interface ContextExplorerViewProps {
@@ -56,53 +57,53 @@ export const ContextExplorerView: React.FC<ContextExplorerViewProps> = ({ active
     ]);
 
     // Muted, restrained series colors
-    const clusterColors = ['#AD8D69', '#8B9B83', '#C4AE8D', '#7E8F96', '#5E5A54'];
+    const clusterColors = ['#B0906C', '#8A9983', '#C8B291', '#7E8F96', '#656057'];
 
     return {
       backgroundColor: 'transparent',
       tooltip: {
         trigger: 'item',
-        backgroundColor: '#0C0C0C',
-        borderColor: '#292723',
+        backgroundColor: '#0C0B0A',
+        borderColor: 'rgba(255, 255, 255, 0.08)',
         borderWidth: 1,
-        textStyle: { color: '#F0EDE7', fontSize: 11, fontFamily: 'monospace' },
+        textStyle: { color: '#F2EFEB', fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
         formatter: (params: any) => {
           const d = params.value;
           return `
-            <div style="font-weight: 500; color: #F0EDE7; margin-bottom: 2px;">Node: ${d[6]}</div>
-            <div style="color: #898277;">Coord: (${d[0]}, ${d[1]})</div>
-            <div style="color: #898277;">Cluster: C${d[2]} • Rate: ${d[4]} pps</div>
-            <div style="color: #898277;">Contextual Z: ${d[5]}</div>
-            <div style="margin-top: 3px;">
-              ${d[3] === 1 ? '<span style="color:#B85951">Malicious Flood</span>' : '<span style="color:#8B9B83">Benign Congestion</span>'}
+            <div style="font-weight: 500; color: #F2EFEB; margin-bottom: 2px;">Receiver Node: ${d[6]}</div>
+            <div style="color: #807A70;">Position: (${d[0]}, ${d[1]})</div>
+            <div style="color: #807A70;">Cluster: C${d[2]} • Rate: ${d[4]} pps</div>
+            <div style="color: #807A70;">Contextual Z-Score: ${d[5]}</div>
+            <div style="margin-top: 4px; font-weight: 500;">
+              ${d[3] === 1 ? '<span style="color:#B85951">Malicious Flood (1)</span>' : '<span style="color:#8A9983">Benign Congestion (0)</span>'}
             </div>
           `;
         },
       },
-      grid: { left: '5%', right: '3%', top: '6%', bottom: '10%' },
+      grid: { left: '4%', right: '3%', top: '6%', bottom: '10%' },
       xAxis: {
-        name: contextData.has_spatial_coordinates ? 'X (m)' : 'Time (s)',
-        nameTextStyle: { color: '#898277', fontSize: 10 },
-        axisLine: { lineStyle: { color: '#292723' } },
-        splitLine: { lineStyle: { color: '#171715' } },
-        axisLabel: { color: '#898277', fontSize: 10, fontFamily: 'monospace' },
+        name: contextData.has_spatial_coordinates ? 'Receiver X (m)' : 'Timestamp (s)',
+        nameTextStyle: { color: '#807A70', fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        axisLine: { lineStyle: { color: '#262420' } },
+        splitLine: { lineStyle: { color: '#161513' } },
+        axisLabel: { color: '#807A70', fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
       },
       yAxis: {
-        name: contextData.has_spatial_coordinates ? 'Y (m)' : 'Rate (pps)',
-        nameTextStyle: { color: '#898277', fontSize: 10 },
-        axisLine: { lineStyle: { color: '#292723' } },
-        splitLine: { lineStyle: { color: '#171715' } },
-        axisLabel: { color: '#898277', fontSize: 10, fontFamily: 'monospace' },
+        name: contextData.has_spatial_coordinates ? 'Receiver Y (m)' : 'Packet Rate (pps)',
+        nameTextStyle: { color: '#807A70', fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        axisLine: { lineStyle: { color: '#262420' } },
+        splitLine: { lineStyle: { color: '#161513' } },
+        axisLabel: { color: '#807A70', fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
       },
       series: [
         {
           type: 'scatter',
-          symbolSize: (val: any) => Math.min(16, Math.max(5, val[4] / 10)),
+          symbolSize: (val: any) => Math.min(18, Math.max(6, val[4] / 8)),
           data: seriesData,
           itemStyle: {
             color: (params: any) => {
               if (colorBy === 'label') {
-                return params.value[3] === 1 ? '#B85951' : '#8B9B83';
+                return params.value[3] === 1 ? '#B85951' : '#8A9983';
               }
               return clusterColors[params.value[2] % clusterColors.length];
             },
@@ -124,30 +125,30 @@ export const ContextExplorerView: React.FC<ContextExplorerViewProps> = ({ active
       backgroundColor: 'transparent',
       tooltip: {
         trigger: 'axis',
-        backgroundColor: '#0C0C0C',
-        borderColor: '#292723',
-        textStyle: { color: '#F0EDE7', fontSize: 11 },
+        backgroundColor: '#0C0B0A',
+        borderColor: 'rgba(255, 255, 255, 0.08)',
+        textStyle: { color: '#F2EFEB', fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
       },
       grid: { left: '8%', right: '4%', top: '12%', bottom: '18%' },
       xAxis: {
         type: 'category',
         data: scenarios.map((s) => s.replace(/_/g, ' ')),
-        axisLabel: { color: '#898277', fontSize: 10 },
-        axisLine: { lineStyle: { color: '#292723' } },
+        axisLabel: { color: '#807A70', fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        axisLine: { lineStyle: { color: '#262420' } },
       },
       yAxis: {
         type: 'value',
         name: 'Rate (pps)',
-        nameTextStyle: { color: '#898277', fontSize: 10 },
-        splitLine: { lineStyle: { color: '#171715' } },
-        axisLabel: { color: '#898277', fontSize: 10, fontFamily: 'monospace' },
+        nameTextStyle: { color: '#807A70', fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        splitLine: { lineStyle: { color: '#161513' } },
+        axisLabel: { color: '#807A70', fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
       },
       series: [
         {
           name: 'Mean Rate',
           type: 'bar',
           data: avgRates,
-          itemStyle: { color: '#AD8D69', borderRadius: [2, 2, 0, 0] },
+          itemStyle: { color: '#B0906C', borderRadius: [3, 3, 0, 0] },
         },
       ],
     };
@@ -155,32 +156,48 @@ export const ContextExplorerView: React.FC<ContextExplorerViewProps> = ({ active
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
-      {/* 1. Header with Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-4 pb-4 border-b border-flux-border">
+      {/* 1. Page Header with Controls */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="text-[10px] font-mono tracking-widest text-flux-accent uppercase">
-              Spatiotemporal Mobility
-            </span>
-            <span className="text-flux-muted text-[10px]">•</span>
-            <span className="text-[10px] font-mono text-flux-muted">Destination-Centric Clustering</span>
+          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-flux-accent/10 border border-flux-accent/20 text-flux-accent text-[11px] font-medium mb-1.5">
+            <Compass size={11} />
+            <span>Spatiotemporal Contextual Analytics</span>
           </div>
-          <h1 className="text-xl font-medium text-flux-text tracking-tight">
+          <h1 className="text-2xl font-semibold text-flux-text tracking-tight">
             Network Context Explorer
           </h1>
-          <p className="text-xs text-flux-secondary mt-1 max-w-xl">
-            Evaluate receiver coordinates, mobility dynamics, and localized baseline parameters (μc, σc) to distinguish road congestion from malicious surges.
+          <p className="text-xs text-flux-secondary mt-1 max-w-xl leading-relaxed">
+            Evaluate receiver coordinates, mobility dynamics, and localized baseline parameters (μc, σc) to distinguish legitimate congestion surges from malicious attacks.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 p-0.5 bg-flux-surface rounded-lg border border-white/[0.04] text-xs">
+            <button
+              onClick={() => setColorBy('cluster')}
+              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+                colorBy === 'cluster' ? 'bg-flux-subsurface text-flux-text shadow-sm' : 'text-flux-muted hover:text-flux-text'
+              }`}
+            >
+              By Cluster
+            </button>
+            <button
+              onClick={() => setColorBy('label')}
+              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+                colorBy === 'label' ? 'bg-flux-subsurface text-flux-accent shadow-sm' : 'text-flux-muted hover:text-flux-text'
+              }`}
+            >
+              By Ground Truth
+            </button>
+          </div>
+
           <select
             value={selectedDatasetId}
             onChange={(e) => {
               setSelectedDatasetId(e.target.value);
               loadExplorerData(e.target.value);
             }}
-            className="bg-flux-surface border border-flux-border rounded px-2.5 py-1.5 text-xs text-flux-text focus:outline-none focus:border-flux-accent font-mono"
+            className="bg-flux-surface border border-white/[0.06] rounded-md px-3 py-1.5 text-xs text-flux-text focus:outline-none focus:border-flux-accent font-medium shadow-sm"
           >
             {datasets.map((d) => (
               <option key={d.id} value={d.id}>
@@ -192,88 +209,84 @@ export const ContextExplorerView: React.FC<ContextExplorerViewProps> = ({ active
       </div>
 
       {loading ? (
-        <div className="py-16 text-center text-xs text-flux-muted">Computing spatiotemporal clustering...</div>
+        <div className="py-20 text-center text-xs text-flux-muted">
+          <div className="w-4 h-4 border border-flux-accent border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+          Computing spatiotemporal clustering and baseline parameters...
+        </div>
       ) : (
         contextData && (
-          <div className="space-y-8">
-            {/* Visual Analytics Grid */}
+          <div className="space-y-6">
+            {/* Visual Analytics Grid: Main Focal Scatter Plot (8 cols) vs Scenario Chart (4 cols) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              {/* 2D Coordinates Map (8 cols) */}
-              <div className="lg:col-span-8 space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-flux-border">
-                  <h2 className="text-xs font-mono uppercase tracking-wider text-flux-secondary">
-                    Receiver Coordinates & Spatiotemporal Clusters
-                  </h2>
-
-                  {/* Toggle Color By without heavy borders */}
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className="text-flux-muted text-[11px]">Color by:</span>
-                    <button
-                      onClick={() => setColorBy('cluster')}
-                      className={`text-[11px] px-2 py-0.5 rounded transition-colors ${
-                        colorBy === 'cluster' ? 'bg-flux-subsurface text-flux-text font-medium' : 'text-flux-muted hover:text-flux-text'
-                      }`}
-                    >
-                      Cluster
-                    </button>
-                    <button
-                      onClick={() => setColorBy('label')}
-                      className={`text-[11px] px-2 py-0.5 rounded transition-colors ${
-                        colorBy === 'label' ? 'bg-flux-subsurface text-flux-accent font-medium' : 'text-flux-muted hover:text-flux-text'
-                      }`}
-                    >
-                      Ground Truth
-                    </button>
+              {/* Primary Focal Canvas: 2D Spatial Visualization */}
+              <div className="lg:col-span-8 flux-panel-focal p-6 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-flux-border/60">
+                  <div>
+                    <h2 className="text-sm font-medium text-flux-text tracking-tight">
+                      Destination-Centric Spatiotemporal Clusters & Receiver Traces
+                    </h2>
+                    <p className="text-[11px] text-flux-muted mt-0.5">
+                      Sampled receiver nodes mapped in 2D space with bubble radius proportional to packet rate
+                    </p>
                   </div>
+                  <span className="text-[11px] text-flux-muted font-mono tabular-nums">
+                    {contextData.spatial_points.length} nodes plotted
+                  </span>
                 </div>
 
-                <div className="h-80 w-full">
+                <div className="h-96 w-full">
                   <ReactECharts option={getScatterOption()} style={{ height: '100%', width: '100%' }} />
-                </div>
-
-                <div className="text-[10px] text-flux-muted flex items-center justify-between font-mono pt-1">
-                  <span>Sample: {contextData.spatial_points.length} points plotted</span>
-                  <span>Point radius proportional to packet rate</span>
                 </div>
               </div>
 
-              {/* Scenario Average Rates (4 cols) */}
-              <div className="lg:col-span-4 space-y-3">
-                <div className="pb-2 border-b border-flux-border">
-                  <h2 className="text-xs font-mono uppercase tracking-wider text-flux-secondary">
-                    Scenario Mean Rates
-                  </h2>
+              {/* Supporting Scenario Distribution Chart */}
+              <div className="lg:col-span-4 flux-panel p-5 space-y-4 flex flex-col justify-between">
+                <div>
+                  <h3 className="text-sm font-medium text-flux-text tracking-tight">
+                    Scenario Traffic Density
+                  </h3>
+                  <p className="text-[11px] text-flux-muted mt-0.5">
+                    Mean packet delivery rate across mobility environments
+                  </p>
                 </div>
-                <div className="h-80 w-full">
+
+                <div className="h-80 w-full my-auto">
                   <ReactECharts option={getScenarioBarOption()} style={{ height: '100%', width: '100%' }} />
+                </div>
+
+                <div className="text-[11px] text-flux-secondary pt-2 border-t border-flux-border/40">
+                  High density in highway congestion reflects legitimate vehicular concentration, not attack flooding.
                 </div>
               </div>
             </div>
 
-            {/* Localized Statistical Baselines Reference */}
-            <div className="space-y-4 pt-2">
-              <div className="flex items-center justify-between pb-2 border-b border-flux-border">
-                <h2 className="text-xs font-mono uppercase tracking-wider text-flux-secondary">
-                  Localized Statistical Baselines (Khan et al. 2026 Formulation)
-                </h2>
-                <span className="text-[11px] font-mono text-flux-muted">
-                  Contextual Parameters (μc, σc)
-                </span>
+            {/* Localized Statistical Baselines Reference Table */}
+            <div className="flux-panel p-5 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-flux-border/60">
+                <div>
+                  <h3 className="text-sm font-medium text-flux-text tracking-tight flex items-center gap-2">
+                    <Layers size={14} className="text-flux-accent" />
+                    <span>Localized Statistical Baselines (Khan et al. 2026 Formulation)</span>
+                  </h3>
+                  <p className="text-xs text-flux-secondary mt-0.5 font-normal">
+                    Each cluster establishes dynamic parameters (μc, σc). Traffic surges are evaluated via contextual Z-scores: an observed 45 pps surge is normal in highway congestion (μc = 45), but anomalous in freeflow (μc = 15).
+                  </p>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 font-mono text-xs">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {Object.entries(contextData.cluster_baselines).map(([cName, stats]: any) => (
-                  <div key={cName} className="space-y-1">
-                    <div className="font-semibold text-flux-text text-xs flex items-center justify-between">
+                  <div key={cName} className="p-3.5 rounded-lg bg-flux-subsurface/60 border border-white/[0.03] space-y-1.5">
+                    <div className="font-medium text-xs text-flux-text flex items-center justify-between">
                       <span>{cName}</span>
-                      <span className="text-[10px] text-flux-muted tabular-nums">{stats.sample_count} samples</span>
+                      <span className="text-[10px] text-flux-muted font-mono tabular-nums">{stats.sample_count} samples</span>
                     </div>
-                    <div className="text-[11px] text-flux-secondary flex justify-between pt-1">
-                      <span className="text-flux-muted">Mean (μ):</span>
+                    <div className="text-xs text-flux-secondary flex justify-between pt-1 font-mono">
+                      <span className="text-flux-muted font-sans text-[11px]">Baseline Mean (μ):</span>
                       <span className="text-flux-accent font-medium tabular-nums">{stats.mean_rate_pps} pps</span>
                     </div>
-                    <div className="text-[11px] text-flux-secondary flex justify-between">
-                      <span className="text-flux-muted">Std Dev (σ):</span>
+                    <div className="text-xs text-flux-secondary flex justify-between font-mono">
+                      <span className="text-flux-muted font-sans text-[11px]">Std Dev (σ):</span>
                       <span className="text-flux-text tabular-nums">{stats.std_rate_pps} pps</span>
                     </div>
                   </div>

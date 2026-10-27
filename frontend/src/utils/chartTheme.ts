@@ -1,105 +1,111 @@
 /**
  * FluxV2X Authoritative ECharts Design Theme
  *
- * Implements the dark-first engineering instrument palette:
- * Obsidian, Charcoal, Graphite, Bronze, Champagne, Sage, and muted semantic series.
+ * Implements the refined, dark-first engineering instrument palette:
+ * Obsidian, Charcoal, Graphite, Warm Bronze, Soft Champagne, and Muted Sage.
  */
 
 export const fluxChartTheme = {
   backgroundColor: 'transparent',
   textStyle: {
-    color: '#B6B0A6',
+    color: '#B8B2A8',
     fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
   },
   title: {
     textStyle: {
-      color: '#F0EDE7',
-      fontSize: 12,
+      color: '#F2EFEB',
+      fontSize: 13,
       fontWeight: 500,
+      fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
     },
     subtextStyle: {
-      color: '#898277',
+      color: '#807A70',
       fontSize: 11,
+      fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
     },
   },
   color: [
-    '#AD8D69', // Muted bronze
-    '#8B9B83', // Muted sage
-    '#C4AE8D', // Soft champagne
+    '#B0906C', // Warm bronze
+    '#8A9983', // Muted sage
+    '#C8B291', // Soft champagne
     '#7E8F96', // Slate
-    '#C4924A', // Muted amber (warning)
-    '#B85951', // Restrained red (anomaly)
+    '#C4924A', // Accessible warm amber
+    '#B85951', // Restrained red
   ],
   grid: {
-    top: 35,
-    bottom: 30,
-    left: 40,
-    right: 20,
-    borderColor: '#292723',
+    top: 32,
+    bottom: 28,
+    left: 36,
+    right: 18,
+    borderColor: '#262420',
     show: false,
   },
   categoryAxis: {
     axisLine: {
       lineStyle: {
-        color: '#292723',
+        color: '#262420',
       },
     },
     axisTick: {
       lineStyle: {
-        color: '#292723',
+        color: '#262420',
       },
     },
     axisLabel: {
-      color: '#898277',
-      fontSize: 10,
+      color: '#807A70',
+      fontSize: 11,
+      fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
     },
     splitLine: {
       show: true,
       lineStyle: {
-        color: '#171715',
+        color: '#161513',
       },
     },
   },
   valueAxis: {
     axisLine: {
       lineStyle: {
-        color: '#292723',
+        color: '#262420',
       },
     },
     axisTick: {
       lineStyle: {
-        color: '#292723',
+        color: '#262420',
       },
     },
     axisLabel: {
-      color: '#898277',
-      fontSize: 10,
+      color: '#807A70',
+      fontSize: 11,
+      fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
     },
     splitLine: {
       show: true,
       lineStyle: {
-        color: '#171715',
+        color: '#161513',
       },
     },
   },
   tooltip: {
-    backgroundColor: '#0C0C0C',
-    borderColor: '#292723',
+    backgroundColor: '#0C0B0A',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     borderWidth: 1,
     textStyle: {
-      color: '#F0EDE7',
+      color: '#F2EFEB',
       fontSize: 11,
-      fontFamily: 'JetBrains Mono, monospace',
+      fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
     },
-    padding: [6, 10],
-    extraCssText: 'box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); border-radius: 4px;',
+    padding: [8, 12],
+    extraCssText: 'box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6); border-radius: 6px;',
   },
   legend: {
     textStyle: {
-      color: '#B6B0A6',
+      color: '#B8B2A8',
       fontSize: 11,
+      fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
     },
-    itemWidth: 12,
-    itemHeight: 8,
+    itemWidth: 10,
+    itemHeight: 6,
+    borderRadius: 2,
   },
 };

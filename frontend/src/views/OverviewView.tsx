@@ -3,7 +3,9 @@ import {
   ArrowRight,
   Plus,
   Layers,
-  Activity
+  CheckCircle2,
+  FileCode,
+  Sparkles
 } from 'lucide-react';
 import { api, SystemStats, Dataset, Experiment } from '../api/client';
 import { NavView } from '../components/Sidebar';
@@ -50,29 +52,26 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ onNavigate }) => {
   const primaryDataset = datasets[0] || null;
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto pb-12">
-      {/* 1. Sophisticated Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-4 pb-4 border-b border-flux-border">
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+      {/* 1. Page Header with Actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="text-[10px] font-mono tracking-widest text-flux-accent uppercase">
-              Operational Workspace
-            </span>
-            <span className="text-flux-muted text-[10px]">•</span>
-            <span className="text-[10px] font-mono text-flux-muted">Primary Environment</span>
+          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-flux-accent/10 border border-flux-accent/20 text-flux-accent text-[11px] font-medium mb-1.5">
+            <Sparkles size={11} />
+            <span>Workspace: Primary Research Environment</span>
           </div>
-          <h1 className="text-xl font-medium text-flux-text tracking-tight">
+          <h1 className="text-2xl font-semibold text-flux-text tracking-tight">
             Research Command Center
           </h1>
-          <p className="text-xs text-flux-secondary mt-1 max-w-xl">
-            Live telemetry ingestion, spatiotemporal mobility clustering, and empirical evaluation metrics for vehicular flooding defenses.
+          <p className="text-xs text-flux-secondary mt-1 max-w-xl leading-relaxed">
+            Operational status, telemetry ingestion pipeline, and verified empirical model evaluations for vehicular flooding defenses.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <button
             onClick={() => onNavigate('datasets')}
-            className="flux-btn-ghost flex items-center gap-1.5"
+            className="flux-btn-secondary flex items-center gap-1.5"
           >
             <Plus size={13} className="text-flux-accent" />
             <span>Import Dataset</span>
@@ -87,98 +86,100 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* 2. Quiet Operational Status Strip (No Boxed Cards) */}
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-mono text-flux-secondary py-1 border-b border-flux-border/60">
+      {/* 2. Quiet Operational Status Strip */}
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 text-xs text-flux-secondary px-4 py-2.5 rounded-lg bg-flux-surface/60 border border-white/[0.04]">
         <div className="flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-flux-sage" />
-          <span className="text-flux-muted text-[11px]">API:</span>
-          <span className="text-flux-text">REST Online</span>
+          <span className="text-flux-muted text-[11px]">API Core:</span>
+          <span className="font-medium text-flux-text">REST Online</span>
         </div>
-        <span className="text-flux-border hidden sm:inline">|</span>
         <div className="flex items-center gap-2">
-          <span className="text-flux-muted text-[11px]">Storage Engine:</span>
-          <span className="text-flux-text">Polars / DuckDB</span>
+          <span className="text-flux-muted text-[11px]">Data Engine:</span>
+          <span className="text-flux-text font-medium">Polars / DuckDB</span>
         </div>
-        <span className="text-flux-border hidden sm:inline">|</span>
         <div className="flex items-center gap-2">
           <span className="text-flux-muted text-[11px]">Worker Pool:</span>
-          <span className="text-flux-text">{stats?.active_workers || 4} threads ready</span>
+          <span className="text-flux-text font-medium">{stats?.active_workers || 4} threads ready</span>
         </div>
-        <span className="text-flux-border hidden sm:inline">|</span>
         <div className="flex items-center gap-2 truncate">
           <span className="text-flux-muted text-[11px]">Active Trace:</span>
-          <span className="text-flux-accent truncate max-w-[220px]">
+          <span className="text-flux-accent truncate max-w-[240px] font-medium">
             {primaryDataset ? primaryDataset.name : 'None selected'}
           </span>
         </div>
       </div>
 
-      {/* 3. Refined Key Metrics with Minimal Framing (No heavy rectangles!) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-1">
-        <div>
-          <div className="text-[10px] font-mono tracking-wider uppercase text-flux-muted">
+      {/* 3. Refined Key Metrics Row in Cohesive Surface */}
+      <div className="flux-panel p-5 grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="md:pr-6 md:border-r border-flux-border/60">
+          <div className="text-xs font-medium text-flux-muted">
             Telemetry Datasets
           </div>
-          <div className="text-3xl font-light font-mono text-flux-text mt-1.5 tabular-nums">
+          <div className="text-2xl font-semibold tracking-tight text-flux-text mt-1.5 font-mono tabular-nums">
             {stats?.total_datasets || 0}
           </div>
-          <div className="text-[11px] text-flux-secondary mt-1 font-mono">
-            {stats?.total_records.toLocaleString() || 0} records
+          <div className="text-[11px] text-flux-secondary mt-0.5 font-mono">
+            {stats?.total_records.toLocaleString() || 0} validated records
           </div>
         </div>
 
-        <div>
-          <div className="text-[10px] font-mono tracking-wider uppercase text-flux-muted">
+        <div className="md:pr-6 md:border-r border-flux-border/60">
+          <div className="text-xs font-medium text-flux-muted">
             Evaluated Models
           </div>
-          <div className="text-3xl font-light font-mono text-flux-text mt-1.5 tabular-nums">
+          <div className="text-2xl font-semibold tracking-tight text-flux-text mt-1.5 font-mono tabular-nums">
             {stats?.completed_experiments || 0}
           </div>
-          <div className="text-[11px] text-flux-secondary mt-1">
+          <div className="text-[11px] text-flux-secondary mt-0.5">
             Across 10 classifier families
           </div>
         </div>
 
-        <div>
-          <div className="text-[10px] font-mono tracking-wider uppercase text-flux-muted">
+        <div className="md:pr-6 md:border-r border-flux-border/60">
+          <div className="text-xs font-medium text-flux-muted">
             Offline Replays
           </div>
-          <div className="text-3xl font-light font-mono text-flux-text mt-1.5 tabular-nums">
+          <div className="text-2xl font-semibold tracking-tight text-flux-text mt-1.5 font-mono tabular-nums">
             {stats?.total_simulations || 0}
           </div>
-          <div className="text-[11px] text-flux-secondary mt-1">
+          <div className="text-[11px] text-flux-secondary mt-0.5">
             Deterministic defense tests
           </div>
         </div>
 
         <div>
-          <div className="text-[10px] font-mono tracking-wider uppercase text-flux-muted">
+          <div className="text-xs font-medium text-flux-muted">
             Poison Protection
           </div>
-          <div className="text-3xl font-light font-mono text-flux-sage mt-1.5">
+          <div className="text-2xl font-semibold tracking-tight text-flux-sage mt-1.5">
             Active
           </div>
-          <div className="text-[11px] text-flux-secondary mt-1">
+          <div className="text-[11px] text-flux-secondary mt-0.5">
             Rolling baseline gate online
           </div>
         </div>
       </div>
 
       {/* 4. Asymmetric Content Grid: Real Activity vs Methodological Context */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Main Column (8 Cols): Recent Datasets & Experiments */}
-        <div className="lg:col-span-8 space-y-8">
-          {/* Recent Ingested Datasets List */}
-          <div>
-            <div className="flex items-center justify-between pb-2 mb-2 border-b border-flux-border">
-              <h2 className="text-xs font-mono uppercase tracking-wider text-flux-secondary">
-                Verified Ingestion Telemetry
-              </h2>
+        <div className="lg:col-span-8 space-y-6">
+          {/* Recent Ingested Datasets Panel */}
+          <div className="flux-panel p-5 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-flux-border/60">
+              <div>
+                <h2 className="text-sm font-medium text-flux-text tracking-tight">
+                  Verified Telemetry Datasets
+                </h2>
+                <p className="text-[11px] text-flux-muted mt-0.5 font-normal">
+                  Ingested network captures with verified cryptographic checksums
+                </p>
+              </div>
               <button
                 onClick={() => onNavigate('datasets')}
-                className="text-[11px] text-flux-accent hover:text-flux-champagne flex items-center gap-1 transition-colors"
+                className="text-xs text-flux-accent hover:text-flux-champagne font-medium flex items-center gap-1 transition-colors"
               >
-                <span>Full Library</span>
+                <span>View Library</span>
                 <ArrowRight size={11} />
               </button>
             </div>
@@ -188,48 +189,57 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ onNavigate }) => {
                 No datasets ingested yet. Use the Dataset Library to upload CSV or Parquet captures.
               </div>
             ) : (
-              <div className="divide-y divide-flux-border/60">
+              <div className="divide-y divide-flux-border/40">
                 {datasets.slice(0, 4).map((d) => (
                   <div
                     key={d.id}
-                    className="py-3 flex items-center justify-between hover:bg-flux-subsurface/40 px-2 rounded -mx-2 transition-colors"
+                    className="py-3 flex items-center justify-between hover:bg-flux-subsurface/40 px-2.5 rounded-lg -mx-2.5 transition-colors"
                   >
                     <div className="min-w-0 pr-4">
                       <div className="text-xs font-medium text-flux-text truncate">
                         {d.name}
                       </div>
-                      <div className="text-[11px] text-flux-muted font-mono mt-0.5 flex items-center gap-3">
-                        <span>{d.file_format.toUpperCase()}</span>
+                      <div className="text-[11px] text-flux-muted mt-0.5 flex items-center gap-2.5">
+                        <span className="font-mono uppercase text-[10px] text-flux-secondary">{d.file_format}</span>
                         <span>•</span>
-                        <span className="tabular-nums">{d.row_count.toLocaleString()} rows</span>
+                        <span className="font-mono tabular-nums">{d.row_count.toLocaleString()} rows</span>
                         <span>•</span>
-                        <span>{d.column_count} cols</span>
-                        <span>•</span>
-                        <span className="text-flux-secondary">{d.provenance || 'verified'}</span>
+                        <span>{d.column_count} columns</span>
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => onNavigate('schema')}
-                      className="text-xs text-flux-muted hover:text-flux-text font-mono text-[11px] shrink-0"
-                    >
-                      Inspect →
-                    </button>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-flux-subsurface text-flux-secondary font-medium border border-white/[0.04]">
+                        {d.provenance || 'verified'}
+                      </span>
+                      <button
+                        onClick={() => onNavigate('schema')}
+                        className="text-xs text-flux-muted hover:text-flux-text p-1 transition-colors"
+                        title="Inspect Schema"
+                      >
+                        <FileCode size={13} />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Recent Experiment Results */}
-          <div>
-            <div className="flex items-center justify-between pb-2 mb-2 border-b border-flux-border">
-              <h2 className="text-xs font-mono uppercase tracking-wider text-flux-secondary">
-                Model Evaluations & Results
-              </h2>
+          {/* Recent Experiment Results Panel */}
+          <div className="flux-panel p-5 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-flux-border/60">
+              <div>
+                <h2 className="text-sm font-medium text-flux-text tracking-tight">
+                  Model Evaluations & Findings
+                </h2>
+                <p className="text-[11px] text-flux-muted mt-0.5 font-normal">
+                  Recent empirical evaluations under disjoint scenario partitions
+                </p>
+              </div>
               <button
                 onClick={() => onNavigate('models')}
-                className="text-[11px] text-flux-accent hover:text-flux-champagne flex items-center gap-1 transition-colors"
+                className="text-xs text-flux-accent hover:text-flux-champagne font-medium flex items-center gap-1 transition-colors"
               >
                 <span>Model Lab</span>
                 <ArrowRight size={11} />
@@ -241,17 +251,17 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ onNavigate }) => {
                 No experiments recorded yet. Run a training session in the Model Laboratory.
               </div>
             ) : (
-              <div className="divide-y divide-flux-border/60">
+              <div className="divide-y divide-flux-border/40">
                 {experiments.slice(0, 4).map((exp) => (
                   <div
                     key={exp.id}
-                    className="py-3 flex items-center justify-between hover:bg-flux-subsurface/40 px-2 rounded -mx-2 transition-colors"
+                    className="py-3 flex items-center justify-between hover:bg-flux-subsurface/40 px-2.5 rounded-lg -mx-2.5 transition-colors"
                   >
                     <div className="min-w-0 pr-4">
                       <div className="text-xs font-medium text-flux-text truncate">
                         {exp.name}
                       </div>
-                      <div className="text-[11px] text-flux-muted font-mono mt-0.5 flex items-center gap-2">
+                      <div className="text-[11px] text-flux-muted mt-0.5 flex items-center gap-2">
                         <span>{exp.model_family}</span>
                         <span>•</span>
                         <span>Split: {exp.split_strategy}</span>
@@ -262,20 +272,20 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ onNavigate }) => {
                       {exp.metrics ? (
                         <div className="flex items-center gap-4">
                           <div className="text-right">
-                            <span className="text-[10px] text-flux-muted block font-mono">Macro F1</span>
+                            <span className="text-[10px] text-flux-muted block font-normal">Macro-F1</span>
                             <span className="font-mono text-xs font-semibold text-flux-accent tabular-nums">
                               {(exp.metrics.macro_f1 * 100).toFixed(1)}%
                             </span>
                           </div>
                           <div className="text-right">
-                            <span className="text-[10px] text-flux-muted block font-mono">Accuracy</span>
+                            <span className="text-[10px] text-flux-muted block font-normal">Accuracy</span>
                             <span className="font-mono text-xs text-flux-secondary tabular-nums">
                               {(exp.metrics.accuracy * 100).toFixed(1)}%
                             </span>
                           </div>
                         </div>
                       ) : (
-                        <span className="text-[11px] text-flux-warning font-mono">
+                        <span className="text-[11px] text-flux-warning font-medium px-2 py-0.5 rounded bg-flux-subsurface">
                           {exp.status}
                         </span>
                       )}
@@ -287,39 +297,39 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ onNavigate }) => {
           </div>
         </div>
 
-        {/* Supporting Column (4 Cols): Research Methodology & Defense Architecture */}
+        {/* Supporting Column (4 Cols): Research Methodology & Safeguards */}
         <div className="lg:col-span-4 space-y-6">
-          {/* Editorial Context Panel (Subtle gradient, warm background) */}
-          <div className="p-5 rounded bg-gradient-to-b from-flux-surface to-flux-subsurface border border-flux-border/80 space-y-3">
-            <div className="flex items-center gap-2 text-xs font-medium text-flux-text">
-              <Layers size={14} className="text-flux-accent" />
+          {/* Focal Panel with Subtle Ambient Radial Gradient */}
+          <div className="flux-panel-focal p-5 space-y-3.5">
+            <div className="flex items-center gap-2 text-sm font-medium text-flux-text tracking-tight">
+              <Layers size={15} className="text-flux-accent" />
               <span>ACAFDM Architecture</span>
             </div>
             <p className="text-xs text-flux-secondary leading-relaxed font-normal">
-              Dual-gate framework distinguishing road congestion surges from packet flooding attacks via destination-centric clustering and dynamic z-score baselines.
+              Dual-gate detection framework that distinguishes road congestion surges from malicious flooding attacks via destination-centric clustering and dynamic z-score baselines.
             </p>
-            <div className="pt-2 border-t border-flux-border/60 space-y-1.5 text-xs">
+            <div className="pt-2 border-t border-flux-border/60 space-y-2 text-xs">
               <div className="flex justify-between text-flux-secondary">
                 <span className="text-flux-muted">Reference:</span>
-                <span className="font-mono text-[11px] text-flux-text">Khan et al. (2026)</span>
+                <span className="font-medium text-flux-text">Khan et al. (2026)</span>
               </div>
               <div className="flex justify-between text-flux-secondary">
                 <span className="text-flux-muted">Publication:</span>
-                <span className="font-mono text-[11px] text-flux-text">Vehicular Comms</span>
+                <span className="font-medium text-flux-text">Vehicular Comms</span>
               </div>
               <div className="flex justify-between text-flux-secondary">
-                <span className="text-flux-muted">Validation:</span>
-                <span className="font-mono text-[11px] text-flux-text">2-Tailed McNemar</span>
+                <span className="text-flux-muted">Hypothesis Test:</span>
+                <span className="font-medium text-flux-text">2-Tailed McNemar</span>
               </div>
               <div className="flex justify-between text-flux-secondary">
-                <span className="text-flux-muted">Execution:</span>
-                <span className="font-mono text-[11px] text-flux-text">Deterministic Offline</span>
+                <span className="text-flux-muted">Execution Mode:</span>
+                <span className="font-medium text-flux-text">Deterministic Offline</span>
               </div>
             </div>
             <div className="pt-2">
               <button
                 onClick={() => onNavigate('context')}
-                className="w-full py-1.5 px-3 rounded bg-flux-elevated text-flux-secondary hover:text-flux-text text-xs transition-colors flex items-center justify-center gap-1.5"
+                className="w-full py-2 px-3 rounded-md bg-flux-surface hover:bg-flux-elevated border border-white/[0.06] text-flux-text text-xs font-medium transition-colors flex items-center justify-center gap-1.5 shadow-sm"
               >
                 <span>Inspect Context Dynamics</span>
                 <ArrowRight size={11} />
@@ -327,29 +337,38 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ onNavigate }) => {
             </div>
           </div>
 
-          {/* Quality & Security Safeguards (Unboxed, pure typography & alignment) */}
-          <div className="space-y-3 pt-2">
-            <h3 className="text-xs font-mono uppercase tracking-wider text-flux-secondary">
+          {/* Quality & Security Safeguards Panel */}
+          <div className="flux-panel p-5 space-y-3.5">
+            <h3 className="text-sm font-medium text-flux-text tracking-tight">
               Security Safeguards
             </h3>
-            <div className="space-y-2.5 text-xs">
-              <div>
-                <div className="font-medium text-flux-text">PyJWT Signature Enforcement</div>
-                <p className="text-[11px] text-flux-muted mt-0.5 leading-normal">
-                  Strict asymmetric and HS256 signature verification with fail-closed 401 challenge.
-                </p>
+            <div className="space-y-3 text-xs">
+              <div className="flex items-start gap-2.5">
+                <CheckCircle2 size={14} className="text-flux-sage mt-0.5 shrink-0" />
+                <div>
+                  <div className="font-medium text-flux-text">Signature Verification</div>
+                  <p className="text-[11px] text-flux-secondary mt-0.5 leading-normal font-normal">
+                    Strict PyJWT signature enforcement with fail-closed 401 challenge on expired or forged tokens.
+                  </p>
+                </div>
               </div>
-              <div>
-                <div className="font-medium text-flux-text">Workspace Isolation</div>
-                <p className="text-[11px] text-flux-muted mt-0.5 leading-normal">
-                  Tenant boundaries enforced at query time across all datasets and experiment logs.
-                </p>
+              <div className="flex items-start gap-2.5">
+                <CheckCircle2 size={14} className="text-flux-sage mt-0.5 shrink-0" />
+                <div>
+                  <div className="font-medium text-flux-text">Workspace Isolation</div>
+                  <p className="text-[11px] text-flux-secondary mt-0.5 leading-normal font-normal">
+                    Tenant boundaries validated at query time across all dataset versions and experiment records.
+                  </p>
+                </div>
               </div>
-              <div>
-                <div className="font-medium text-flux-text">Bounded Ingestion Quota</div>
-                <p className="text-[11px] text-flux-muted mt-0.5 leading-normal">
-                  100MB chunked streaming limit to prevent memory exhaustion and zip-slip attacks.
-                </p>
+              <div className="flex items-start gap-2.5">
+                <CheckCircle2 size={14} className="text-flux-sage mt-0.5 shrink-0" />
+                <div>
+                  <div className="font-medium text-flux-text">Bounded Ingestion Quota</div>
+                  <p className="text-[11px] text-flux-secondary mt-0.5 leading-normal font-normal">
+                    100MB chunked streaming limit to prevent memory exhaustion and zip-slip attacks.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
