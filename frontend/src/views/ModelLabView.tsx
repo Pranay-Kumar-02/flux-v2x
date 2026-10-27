@@ -1,16 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ReactECharts from 'echarts-for-react';
-import {
-  Cpu,
-  Play,
-  CheckCircle2,
-  AlertTriangle,
-  RotateCcw,
-  BarChart,
-  Activity,
-  Layers,
-  FileCheck
-} from 'lucide-react';
+import { Play, RotateCcw, BarChart } from 'lucide-react';
 import { api, Dataset, Experiment } from '../api/client';
 
 interface ModelLabViewProps {
@@ -100,71 +90,85 @@ export const ModelLabView: React.FC<ModelLabViewProps> = ({ activeDataset }) => 
       backgroundColor: 'transparent',
       tooltip: {
         trigger: 'axis',
+        backgroundColor: '#0C0C0C',
+        borderColor: '#292723',
+        textStyle: { color: '#F0EDE7', fontSize: 11, fontFamily: 'monospace' },
         formatter: (params: any) => {
           const pt = params[0].value;
           return `FPR: ${pt[0]}<br/>TPR: ${pt[1]}`;
         },
       },
-      grid: { left: '12%', right: '8%', top: '15%', bottom: '15%' },
+      grid: { left: '8%', right: '4%', top: '8%', bottom: '15%' },
       xAxis: {
         type: 'value',
-        name: 'False Positive Rate (FPR)',
+        name: 'False Positive Rate',
+        nameTextStyle: { color: '#898277', fontSize: 10 },
         min: 0,
         max: 1,
-        axisLine: { lineStyle: { color: '#273544' } },
-        splitLine: { lineStyle: { color: '#17212B' } },
-        axisLabel: { color: '#94A3B8', fontFamily: 'monospace' },
+        axisLine: { lineStyle: { color: '#292723' } },
+        splitLine: { lineStyle: { color: '#171715' } },
+        axisLabel: { color: '#898277', fontSize: 10, fontFamily: 'monospace' },
       },
       yAxis: {
         type: 'value',
-        name: 'True Positive Rate (TPR)',
+        name: 'True Positive Rate',
+        nameTextStyle: { color: '#898277', fontSize: 10 },
         min: 0,
         max: 1,
-        axisLine: { lineStyle: { color: '#273544' } },
-        splitLine: { lineStyle: { color: '#17212B' } },
-        axisLabel: { color: '#94A3B8', fontFamily: 'monospace' },
+        axisLine: { lineStyle: { color: '#292723' } },
+        splitLine: { lineStyle: { color: '#171715' } },
+        axisLabel: { color: '#898277', fontSize: 10, fontFamily: 'monospace' },
       },
       series: [
         {
-          name: 'ROC Curve',
+          name: 'ROC',
           type: 'line',
           data: pts,
           smooth: true,
-          itemStyle: { color: '#2DD4BF' },
-          areaStyle: { color: 'rgba(45, 212, 191, 0.15)' },
+          itemStyle: { color: '#AD8D69' },
+          lineStyle: { width: 1.5 },
+          areaStyle: { color: 'rgba(173, 141, 105, 0.08)' },
         },
       ],
     };
   };
 
   return (
-    <div className="space-y-6">
-      {/* Configure & Launch Bar */}
-      <div className="p-5 rounded-xl bg-flux-surface border border-flux-border space-y-4">
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+      {/* 1. Header with Controls */}
+      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-4 pb-4 border-b border-flux-border">
         <div>
-          <h3 className="text-sm font-semibold text-flux-text flex items-center gap-2">
-            <Cpu size={16} className="text-flux-accent" />
-            Model Laboratory & Experiment Runner
-          </h3>
-          <p className="text-xs text-flux-muted mt-1">
-            Train and evaluate classical and context-aware classifiers using leakage-safe splitting.
-            Reproduce the exact contextual vs raw ablation experiments from Khan et al. (2026).
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-[10px] font-mono tracking-widest text-flux-accent uppercase">
+              Model Evaluation
+            </span>
+            <span className="text-flux-muted text-[10px]">•</span>
+            <span className="text-[10px] font-mono text-flux-muted">10 Classifier Architectures</span>
+          </div>
+          <h1 className="text-xl font-medium text-flux-text tracking-tight">
+            Model Laboratory
+          </h1>
+          <p className="text-xs text-flux-secondary mt-1 max-w-xl">
+            Train and evaluate classical and contextual classifiers under disjoint scenario partitions to verify performance gains without data leakage.
           </p>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* 2. Experiment Configuration Row */}
+      <div className="p-4 rounded bg-flux-subsurface/40 border border-flux-border space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <div>
-            <label className="text-[11px] font-medium text-flux-muted block mb-1">Experiment Name</label>
+            <label className="text-[10px] font-mono uppercase text-flux-muted block mb-1">Experiment Label</label>
             <input
               type="text"
               value={expName}
               onChange={(e) => setExpName(e.target.value)}
-              className="w-full bg-flux-elevated border border-flux-border rounded-lg px-3 py-1.5 text-xs text-flux-text focus:outline-none focus:border-flux-accent font-sans"
+              className="w-full bg-flux-surface border border-flux-border/80 rounded px-2.5 py-1.5 text-xs text-flux-text focus:outline-none focus:border-flux-accent font-sans"
             />
           </div>
 
           <div>
-            <label className="text-[11px] font-medium text-flux-muted block mb-1">Model Family</label>
+            <label className="text-[10px] font-mono uppercase text-flux-muted block mb-1">Architecture</label>
             <select
               value={modelFamily}
               onChange={(e) => {
@@ -172,7 +176,7 @@ export const ModelLabView: React.FC<ModelLabViewProps> = ({ activeDataset }) => 
                 const fam = modelFamilies.find((m) => m.id === e.target.value);
                 if (fam) setExpName(fam.name);
               }}
-              className="w-full bg-flux-elevated border border-flux-border rounded-lg px-3 py-1.5 text-xs text-flux-text focus:outline-none focus:border-flux-accent font-mono"
+              className="w-full bg-flux-surface border border-flux-border/80 rounded px-2.5 py-1.5 text-xs text-flux-text focus:outline-none focus:border-flux-accent font-mono"
             >
               {modelFamilies.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -183,13 +187,13 @@ export const ModelLabView: React.FC<ModelLabViewProps> = ({ activeDataset }) => 
           </div>
 
           <div>
-            <label className="text-[11px] font-medium text-flux-muted block mb-1">Leakage-Safe Split</label>
+            <label className="text-[10px] font-mono uppercase text-flux-muted block mb-1">Split Strategy</label>
             <select
               value={splitStrategy}
               onChange={(e) => setSplitStrategy(e.target.value)}
-              className="w-full bg-flux-elevated border border-flux-border rounded-lg px-3 py-1.5 text-xs text-flux-text focus:outline-none focus:border-flux-accent font-mono"
+              className="w-full bg-flux-surface border border-flux-border/80 rounded px-2.5 py-1.5 text-xs text-flux-text focus:outline-none focus:border-flux-accent font-mono"
             >
-              <option value="scenario_split">Disjoint Scenario Partitioning (Recommended)</option>
+              <option value="scenario_split">Disjoint Scenario Partition (Safe)</option>
               <option value="chronological">Chronological Forward Split</option>
               <option value="stratified">Stratified Random Split</option>
             </select>
@@ -199,17 +203,17 @@ export const ModelLabView: React.FC<ModelLabViewProps> = ({ activeDataset }) => 
             <button
               onClick={handleLaunch}
               disabled={launching || !selectedDatasetId}
-              className="w-full px-4 py-2 rounded-lg bg-flux-accent text-flux-bg font-semibold text-xs hover:bg-flux-accent/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-sm"
+              className="flux-btn-primary w-full flex items-center justify-center gap-1.5 disabled:opacity-40"
             >
               {launching ? (
                 <>
-                  <div className="w-3.5 h-3.5 border-2 border-flux-bg border-t-transparent rounded-full animate-spin" />
-                  <span>Training Model...</span>
+                  <div className="w-3 h-3 border border-flux-bg border-t-transparent rounded-full animate-spin" />
+                  <span>Training...</span>
                 </>
               ) : (
                 <>
-                  <Play size={13} fill="currentColor" />
-                  <span>Launch Experiment</span>
+                  <Play size={11} fill="currentColor" />
+                  <span>Run Experiment</span>
                 </>
               )}
             </button>
@@ -217,90 +221,100 @@ export const ModelLabView: React.FC<ModelLabViewProps> = ({ activeDataset }) => 
         </div>
 
         {launchError && (
-          <div className="p-3 rounded-lg bg-flux-danger/10 border border-flux-danger/30 text-xs text-flux-danger flex items-center gap-2">
-            <AlertTriangle size={15} />
+          <div className="p-2 text-xs text-flux-danger font-mono">
             {launchError}
           </div>
         )}
       </div>
 
-      {/* Main Grid: Experiment List & Results Detail */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Experiment History List */}
-        <div className="p-5 rounded-xl bg-flux-surface border border-flux-border space-y-3">
-          <div className="flex items-center justify-between">
-            <h4 className="text-xs font-semibold text-flux-text flex items-center gap-2">
-              <Activity size={14} className="text-flux-info" />
-              Experiment Runs ({experiments.length})
-            </h4>
-            <button onClick={loadExperiments} className="text-flux-muted hover:text-flux-text">
+      {/* 3. Main Split: Runs (4 cols) & Evaluation Results (8 cols) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left: Saved Runs */}
+        <div className="lg:col-span-4 space-y-3">
+          <div className="flex items-center justify-between pb-2 border-b border-flux-border">
+            <h2 className="text-xs font-mono uppercase tracking-wider text-flux-secondary">
+              Experiment History ({experiments.length})
+            </h2>
+            <button
+              onClick={loadExperiments}
+              className="text-flux-muted hover:text-flux-text transition-colors p-1"
+              title="Refresh experiments"
+            >
               <RotateCcw size={12} />
             </button>
           </div>
 
-          <div className="space-y-2 max-h-[500px] overflow-y-auto">
-            {experiments.map((exp) => {
-              const isSelected = selectedExp?.id === exp.id;
-              const f1 = exp.metrics?.macro_f1;
-              return (
-                <div
-                  key={exp.id}
-                  onClick={() => setSelectedExp(exp)}
-                  className={`p-3 rounded-lg cursor-pointer border transition-all text-xs ${
-                    isSelected
-                      ? 'bg-flux-elevated border-flux-accent/60 shadow-sm'
-                      : 'bg-flux-elevated/40 border-flux-border/50 hover:border-flux-border'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-flux-text truncate max-w-[170px]">{exp.name}</span>
-                    <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
-                      exp.status === 'completed' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-flux-warning/15 text-flux-warning'
-                    }`}>
-                      {exp.status}
-                    </span>
+          <div className="divide-y divide-flux-border/60 max-h-[500px] overflow-y-auto">
+            {experiments.length === 0 ? (
+              <div className="py-8 text-center text-xs text-flux-muted">
+                No experiments recorded yet.
+              </div>
+            ) : (
+              experiments.map((exp) => {
+                const isSelected = selectedExp?.id === exp.id;
+                const f1 = exp.metrics?.macro_f1;
+                return (
+                  <div
+                    key={exp.id}
+                    onClick={() => setSelectedExp(exp)}
+                    className={`py-2.5 px-2.5 rounded cursor-pointer transition-colors text-xs flex items-center justify-between ${
+                      isSelected
+                        ? 'bg-flux-subsurface text-flux-text font-medium'
+                        : 'text-flux-secondary hover:text-flux-text hover:bg-flux-subsurface/40'
+                    }`}
+                  >
+                    <div className="min-w-0 pr-2">
+                      <div className="truncate text-xs">{exp.name}</div>
+                      <div className="text-[10px] text-flux-muted font-mono mt-0.5">
+                        {exp.model_family}
+                      </div>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      {f1 !== undefined ? (
+                        <span className="font-mono text-xs text-flux-accent font-semibold tabular-nums">
+                          {(f1 * 100).toFixed(1)}%
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-flux-muted font-mono">
+                          {exp.status}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="mt-1 flex items-center justify-between text-[11px] font-mono text-flux-muted">
-                    <span>{exp.model_family}</span>
-                    {f1 !== undefined && (
-                      <span className="text-flux-accent font-semibold">
-                        F1: {(f1 * 100).toFixed(1)}%
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
 
         {/* Right: Selected Experiment Analytics */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-8 space-y-6">
           {selectedExp && selectedExp.metrics ? (
             <>
-              {/* Metric Badges */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3.5 rounded-xl bg-flux-surface border border-flux-border">
-                  <span className="text-[10px] font-medium text-flux-muted">Macro-F1 Score</span>
-                  <div className="text-xl font-bold font-mono text-flux-accent mt-0.5">
+              {/* Metrics Strip */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pb-4 border-b border-flux-border">
+                <div>
+                  <span className="text-[10px] font-mono uppercase text-flux-muted">Macro-F1</span>
+                  <div className="text-2xl font-light font-mono text-flux-accent mt-0.5 tabular-nums">
                     {(selectedExp.metrics.macro_f1 * 100).toFixed(2)}%
                   </div>
                 </div>
-                <div className="p-3.5 rounded-xl bg-flux-surface border border-flux-border">
-                  <span className="text-[10px] font-medium text-flux-muted">Malicious-Class F1</span>
-                  <div className="text-xl font-bold font-mono text-flux-info mt-0.5">
+                <div>
+                  <span className="text-[10px] font-mono uppercase text-flux-muted">Malicious F1</span>
+                  <div className="text-2xl font-light font-mono text-flux-text mt-0.5 tabular-nums">
                     {(selectedExp.metrics.malicious_f1 * 100).toFixed(2)}%
                   </div>
                 </div>
-                <div className="p-3.5 rounded-xl bg-flux-surface border border-flux-border">
-                  <span className="text-[10px] font-medium text-flux-muted">False Positive Rate (FPR)</span>
-                  <div className="text-xl font-bold font-mono text-flux-warning mt-0.5">
+                <div>
+                  <span className="text-[10px] font-mono uppercase text-flux-muted">False Positive Rate</span>
+                  <div className="text-2xl font-light font-mono text-flux-warning mt-0.5 tabular-nums">
                     {(selectedExp.metrics.false_positive_rate * 100).toFixed(2)}%
                   </div>
                 </div>
-                <div className="p-3.5 rounded-xl bg-flux-surface border border-flux-border">
-                  <span className="text-[10px] font-medium text-flux-muted">Accuracy</span>
-                  <div className="text-xl font-bold font-mono text-flux-text mt-0.5">
+                <div>
+                  <span className="text-[10px] font-mono uppercase text-flux-muted">Accuracy</span>
+                  <div className="text-2xl font-light font-mono text-flux-secondary mt-0.5 tabular-nums">
                     {(selectedExp.metrics.accuracy * 100).toFixed(2)}%
                   </div>
                 </div>
@@ -310,80 +324,76 @@ export const ModelLabView: React.FC<ModelLabViewProps> = ({ activeDataset }) => 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Confusion Matrix */}
                 {selectedExp.confusion_matrix && (
-                  <div className="p-5 rounded-xl bg-flux-surface border border-flux-border space-y-3">
-                    <h4 className="text-xs font-semibold text-flux-text flex items-center gap-2">
-                      <BarChart size={14} className="text-flux-accent" />
-                      Empirical Confusion Matrix
-                    </h4>
-                    <div className="grid grid-cols-2 gap-2 text-center text-xs font-mono pt-2">
-                      <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
-                        <span className="text-[10px] text-flux-muted block uppercase">True Negative (TN)</span>
-                        <span className="text-lg font-bold text-emerald-400">
+                  <div className="space-y-3">
+                    <div className="pb-1 border-b border-flux-border">
+                      <h4 className="text-xs font-mono uppercase tracking-wider text-flux-secondary">
+                        Empirical Confusion Matrix
+                      </h4>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-center text-xs font-mono pt-1">
+                      <div className="p-3 rounded bg-flux-subsurface/60">
+                        <span className="text-[9px] text-flux-muted block uppercase">TN (Benign Allowed)</span>
+                        <span className="text-base font-bold text-flux-sage tabular-nums mt-0.5 block">
                           {selectedExp.confusion_matrix.true_negative}
                         </span>
-                        <span className="text-[10px] text-flux-muted block mt-1">Benign Congestion Confirmed</span>
                       </div>
-                      <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/30">
-                        <span className="text-[10px] text-flux-muted block uppercase">False Positive (FP)</span>
-                        <span className="text-lg font-bold text-amber-400">
+                      <div className="p-3 rounded bg-flux-subsurface/60">
+                        <span className="text-[9px] text-flux-muted block uppercase">FP (False Alarm)</span>
+                        <span className="text-base font-bold text-flux-warning tabular-nums mt-0.5 block">
                           {selectedExp.confusion_matrix.false_positive}
                         </span>
-                        <span className="text-[10px] text-flux-muted block mt-1">Congestion Misclassified</span>
                       </div>
-                      <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30">
-                        <span className="text-[10px] text-flux-muted block uppercase">False Negative (FN)</span>
-                        <span className="text-lg font-bold text-red-400">
+                      <div className="p-3 rounded bg-flux-subsurface/60">
+                        <span className="text-[9px] text-flux-muted block uppercase">FN (Missed Attack)</span>
+                        <span className="text-base font-bold text-flux-danger tabular-nums mt-0.5 block">
                           {selectedExp.confusion_matrix.false_negative}
                         </span>
-                        <span className="text-[10px] text-flux-muted block mt-1">Flood Missed</span>
                       </div>
-                      <div className="p-4 rounded-lg bg-flux-accent/10 border border-flux-accent/30">
-                        <span className="text-[10px] text-flux-muted block uppercase">True Positive (TP)</span>
-                        <span className="text-lg font-bold text-flux-accent">
+                      <div className="p-3 rounded bg-flux-subsurface/60">
+                        <span className="text-[9px] text-flux-muted block uppercase">TP (Attack Mitigated)</span>
+                        <span className="text-base font-bold text-flux-accent tabular-nums mt-0.5 block">
                           {selectedExp.confusion_matrix.true_positive}
                         </span>
-                        <span className="text-[10px] text-flux-muted block mt-1">Malicious Flood Detected</span>
                       </div>
                     </div>
                   </div>
                 )}
 
                 {/* ROC Curve */}
-                <div className="p-5 rounded-xl bg-flux-surface border border-flux-border space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-semibold text-flux-text flex items-center gap-2">
-                      <Activity size={14} className="text-flux-info" />
-                      ROC Curve (AUC: {selectedExp.metrics.roc_auc ?? 'N/A'})
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between pb-1 border-b border-flux-border">
+                    <h4 className="text-xs font-mono uppercase tracking-wider text-flux-secondary">
+                      ROC Characteristic Curve
                     </h4>
+                    <span className="text-[10px] font-mono text-flux-muted">
+                      AUC: {selectedExp.metrics.roc_auc ?? 'N/A'}
+                    </span>
                   </div>
-                  <div className="h-56 w-full">
+                  <div className="h-44 w-full">
                     <ReactECharts option={getRocOption()} style={{ height: '100%', width: '100%' }} />
                   </div>
                 </div>
               </div>
 
-              {/* Reproducibility & Lineage Metadata */}
-              <div className="p-4 rounded-xl bg-flux-surface border border-flux-border text-xs text-flux-muted space-y-2">
-                <div className="font-semibold text-flux-text flex items-center gap-2">
-                  <FileCheck size={14} className="text-flux-accent" />
-                  Experiment Provenance & Leakage Protection Audit
-                </div>
-                <div className="font-mono text-[11px] grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                  <div>Split Strategy: <span className="text-flux-text">{selectedExp.split_strategy}</span></div>
-                  <div>Random Seed: <span className="text-flux-text">{selectedExp.random_seed}</span></div>
-                  <div>Train Samples: <span className="text-flux-text">{selectedExp.metrics.train_samples}</span></div>
-                  <div>Test Samples: <span className="text-flux-text">{selectedExp.metrics.test_samples}</span></div>
+              {/* Reproducibility Manifest Lineage */}
+              <div className="pt-2 border-t border-flux-border text-xs text-flux-muted space-y-1.5 font-mono text-[11px]">
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-flux-secondary">
+                  <span>Split: <strong className="text-flux-text">{selectedExp.split_strategy}</strong></span>
+                  <span>Seed: <strong className="text-flux-text">{selectedExp.random_seed}</strong></span>
+                  <span>Train: <strong className="text-flux-text tabular-nums">{selectedExp.metrics.train_samples}</strong></span>
+                  <span>Test: <strong className="text-flux-text tabular-nums">{selectedExp.metrics.test_samples}</strong></span>
                 </div>
                 {selectedExp.metrics.split_metadata?.leakage_safeguards && (
-                  <div className="p-2 rounded bg-flux-elevated border border-flux-border text-[11px] text-flux-accent font-mono mt-2">
-                    {selectedExp.metrics.split_metadata.leakage_safeguards.join(' • ')}
+                  <div className="text-[10px] text-flux-muted pt-1">
+                    Guards: {selectedExp.metrics.split_metadata.leakage_safeguards.join(' • ')}
                   </div>
                 )}
               </div>
             </>
           ) : (
-            <div className="p-12 text-center text-xs text-flux-muted rounded-xl bg-flux-surface border border-flux-border">
-              Select an experiment on the left to inspect metrics and ROC curves.
+            <div className="py-16 text-center text-xs text-flux-muted">
+              Select an experiment on the left to inspect scientific evaluation metrics.
             </div>
           )}
         </div>

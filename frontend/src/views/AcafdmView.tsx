@@ -1,16 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  ShieldAlert,
-  Play,
-  CheckCircle2,
-  AlertTriangle,
-  RotateCcw,
-  Sliders,
-  ShieldCheck,
-  Ban,
-  Activity,
-  Layers
-} from 'lucide-react';
+import { Play, CheckCircle2, Ban } from 'lucide-react';
 import { api, Dataset, ACAFDMConfig, ACAFDMRunResult } from '../api/client';
 
 interface AcafdmViewProps {
@@ -75,21 +64,23 @@ export const AcafdmView: React.FC<AcafdmViewProps> = ({ activeDataset }) => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Top Banner: ACAFDM Extension Context */}
-      <div className="p-5 rounded-xl bg-flux-surface border border-flux-border flex items-center justify-between">
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+      {/* 1. Technical Header */}
+      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-4 pb-4 border-b border-flux-border">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-flux-accent/10 border border-flux-accent/20 text-flux-accent text-[10px] font-mono mb-2">
-            FluxV2X Proposed Extension
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-[10px] font-mono tracking-widest text-flux-accent uppercase">
+              Adaptive Mitigation
+            </span>
+            <span className="text-flux-muted text-[10px]">•</span>
+            <span className="text-[10px] font-mono text-flux-muted">Dual-Gate Poison Defense</span>
           </div>
-          <h3 className="text-sm font-semibold text-flux-text flex items-center gap-2">
-            <ShieldAlert size={16} className="text-flux-accent" />
-            Adaptive Context-Aware Malicious Flooding Detection & Mitigation (ACAFDM) Engine
-          </h3>
-          <p className="text-xs text-flux-muted mt-1">
-            Maintains rolling baseline statistics with an explicit Benign-Validation Gate.
-            Adversarial flooding observations are blocked from polluting local cluster baselines,
-            and mitigation is engaged only after persistence conditions (k-consecutive anomalies) are satisfied.
+          <h1 className="text-xl font-medium text-flux-text tracking-tight">
+            ACAFDM Engine
+          </h1>
+          <p className="text-xs text-flux-secondary mt-1 max-w-xl">
+            Online EWMA baseline drift tracking with adversarial poison protection. 
+            Anomalous surges (<span className="font-mono text-flux-accent">|Z| ≥ Z_thresh</span>) are isolated from cluster statistics to prevent threshold pollution.
           </p>
         </div>
 
@@ -97,7 +88,7 @@ export const AcafdmView: React.FC<AcafdmViewProps> = ({ activeDataset }) => {
           <select
             value={selectedDatasetId}
             onChange={(e) => setSelectedDatasetId(e.target.value)}
-            className="bg-flux-elevated border border-flux-border rounded-lg px-3 py-1.5 text-xs text-flux-text focus:outline-none focus:border-flux-accent font-mono"
+            className="bg-flux-surface border border-flux-border rounded px-2.5 py-1.5 text-xs text-flux-text focus:outline-none focus:border-flux-accent font-mono"
           >
             {datasets.map((d) => (
               <option key={d.id} value={d.id}>
@@ -108,17 +99,22 @@ export const AcafdmView: React.FC<AcafdmViewProps> = ({ activeDataset }) => {
         </div>
       </div>
 
-      {/* Configuration & Policy Parameter Controls */}
-      <div className="p-5 rounded-xl bg-flux-surface border border-flux-border space-y-4">
-        <h4 className="text-xs font-semibold text-flux-text flex items-center gap-2">
-          <Sliders size={14} className="text-flux-accent" />
-          Adaptive Policy Controls & Benign Validation Gate
-        </h4>
+      {/* 2. Policy Controls Bar (Subtle surface, no heavy borders) */}
+      <div className="p-4 rounded bg-flux-subsurface/40 border border-flux-border space-y-3">
+        <div className="flex items-center justify-between pb-1 border-b border-flux-border/60">
+          <h2 className="text-xs font-mono uppercase tracking-wider text-flux-secondary">
+            Adaptive Policy Parameters & Benign Gate
+          </h2>
+          <span className="text-[10px] font-mono text-flux-sage flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-flux-sage" />
+            Poison Gate Active
+          </span>
+        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-1">
           <div>
-            <label className="text-[11px] font-medium text-flux-muted block mb-1">
-              Spatiotemporal Clusters (k)
+            <label className="text-[10px] font-mono uppercase text-flux-muted block mb-1">
+              Clusters (k)
             </label>
             <input
               type="number"
@@ -126,13 +122,13 @@ export const AcafdmView: React.FC<AcafdmViewProps> = ({ activeDataset }) => {
               max="8"
               value={clusterCount}
               onChange={(e) => setClusterCount(Number(e.target.value))}
-              className="w-full bg-flux-elevated border border-flux-border rounded-lg px-3 py-1.5 text-xs text-flux-text font-mono"
+              className="w-full bg-flux-surface border border-flux-border/80 rounded px-2.5 py-1.5 text-xs text-flux-text font-mono focus:border-flux-accent outline-none"
             />
           </div>
 
           <div>
-            <label className="text-[11px] font-medium text-flux-muted block mb-1">
-              EWMA Update Rate (α)
+            <label className="text-[10px] font-mono uppercase text-flux-muted block mb-1">
+              Update Rate (α)
             </label>
             <input
               type="number"
@@ -141,26 +137,26 @@ export const AcafdmView: React.FC<AcafdmViewProps> = ({ activeDataset }) => {
               max="0.5"
               value={alphaRate}
               onChange={(e) => setAlphaRate(Number(e.target.value))}
-              className="w-full bg-flux-elevated border border-flux-border rounded-lg px-3 py-1.5 text-xs text-flux-text font-mono"
+              className="w-full bg-flux-surface border border-flux-border/80 rounded px-2.5 py-1.5 text-xs text-flux-text font-mono focus:border-flux-accent outline-none"
             />
           </div>
 
           <div>
-            <label className="text-[11px] font-medium text-flux-muted block mb-1">
-              Z-Score Threshold (Z_thresh)
+            <label className="text-[10px] font-mono uppercase text-flux-muted block mb-1">
+              Z Threshold (Z_thresh)
             </label>
             <input
               type="number"
               step="0.1"
               value={zThreshold}
               onChange={(e) => setZThreshold(Number(e.target.value))}
-              className="w-full bg-flux-elevated border border-flux-border rounded-lg px-3 py-1.5 text-xs text-flux-text font-mono"
+              className="w-full bg-flux-surface border border-flux-border/80 rounded px-2.5 py-1.5 text-xs text-flux-text font-mono focus:border-flux-accent outline-none"
             />
           </div>
 
           <div>
-            <label className="text-[11px] font-medium text-flux-muted block mb-1">
-              Persistence Streak (k)
+            <label className="text-[10px] font-mono uppercase text-flux-muted block mb-1">
+              Streak (k)
             </label>
             <input
               type="number"
@@ -168,7 +164,7 @@ export const AcafdmView: React.FC<AcafdmViewProps> = ({ activeDataset }) => {
               max="10"
               value={persistenceK}
               onChange={(e) => setPersistenceK(Number(e.target.value))}
-              className="w-full bg-flux-elevated border border-flux-border rounded-lg px-3 py-1.5 text-xs text-flux-text font-mono"
+              className="w-full bg-flux-surface border border-flux-border/80 rounded px-2.5 py-1.5 text-xs text-flux-text font-mono focus:border-flux-accent outline-none"
             />
           </div>
 
@@ -176,137 +172,124 @@ export const AcafdmView: React.FC<AcafdmViewProps> = ({ activeDataset }) => {
             <button
               onClick={handleRunEvaluation}
               disabled={evaluating || !selectedDatasetId}
-              className="w-full px-4 py-2 rounded-lg bg-flux-accent text-flux-bg font-semibold text-xs hover:bg-flux-accent/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-sm"
+              className="flux-btn-primary w-full flex items-center justify-center gap-1.5 disabled:opacity-40"
             >
               {evaluating ? (
                 <>
-                  <div className="w-3.5 h-3.5 border-2 border-flux-bg border-t-transparent rounded-full animate-spin" />
-                  <span>Evaluating Stream...</span>
+                  <div className="w-3 h-3 border border-flux-bg border-t-transparent rounded-full animate-spin" />
+                  <span>Evaluating...</span>
                 </>
               ) : (
                 <>
-                  <Play size={13} fill="currentColor" />
-                  <span>Execute ACAFDM Trace</span>
+                  <Play size={11} fill="currentColor" />
+                  <span>Execute Trace</span>
                 </>
               )}
             </button>
           </div>
         </div>
-
-        {/* Poison Gate Notice */}
-        <div className="p-3 rounded-lg bg-flux-elevated border border-flux-border text-xs flex items-center justify-between">
-          <div className="flex items-center gap-2 text-flux-text">
-            <ShieldCheck size={16} className="text-emerald-400" />
-            <span>Benign-Validation Gate: Active</span>
-            <span className="text-flux-muted text-[11px]">
-              (Observations with |Z| ≥ {zThreshold} are blocked from updating rolling baselines)
-            </span>
-          </div>
-          <span className="text-[11px] font-mono text-emerald-400">POISON_RESISTANT</span>
-        </div>
       </div>
 
-      {/* Evaluation Results Cards */}
+      {/* 3. Evaluation Results Strip */}
       {result && (
-        <>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            <div className="p-3.5 rounded-xl bg-flux-surface border border-flux-border">
-              <span className="text-[10px] font-medium text-flux-muted">Evaluated Flows</span>
-              <div className="text-xl font-bold font-mono text-flux-text mt-0.5">
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-6 pb-4 border-b border-flux-border">
+            <div>
+              <span className="text-[10px] font-mono uppercase text-flux-muted">Evaluated Flows</span>
+              <div className="text-2xl font-light font-mono text-flux-text mt-0.5 tabular-nums">
                 {result.total_observations.toLocaleString()}
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-flux-surface border border-flux-border">
-              <span className="text-[10px] font-medium text-flux-muted">Normal Allowed</span>
-              <div className="text-xl font-bold font-mono text-emerald-400 mt-0.5">
+            <div>
+              <span className="text-[10px] font-mono uppercase text-flux-muted">Normal Allowed</span>
+              <div className="text-2xl font-light font-mono text-flux-sage mt-0.5 tabular-nums">
                 {result.allowed_count.toLocaleString()}
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-flux-surface border border-flux-border">
-              <span className="text-[10px] font-medium text-flux-muted">Flagged Suspicious</span>
-              <div className="text-xl font-bold font-mono text-flux-warning mt-0.5">
+            <div>
+              <span className="text-[10px] font-mono uppercase text-flux-muted">Flagged Suspicious</span>
+              <div className="text-2xl font-light font-mono text-flux-warning mt-0.5 tabular-nums">
                 {result.flagged_suspicious_count.toLocaleString()}
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-flux-surface border border-flux-border">
-              <span className="text-[10px] font-medium text-flux-muted">Mitigated (Persistent)</span>
-              <div className="text-xl font-bold font-mono text-flux-danger mt-0.5">
+            <div>
+              <span className="text-[10px] font-mono uppercase text-flux-muted">Mitigated (Persistent)</span>
+              <div className="text-2xl font-light font-mono text-flux-danger mt-0.5 tabular-nums">
                 {result.mitigated_count.toLocaleString()}
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-flux-surface border border-flux-border">
-              <span className="text-[10px] font-medium text-flux-muted">Poison Attempts Blocked</span>
-              <div className="text-xl font-bold font-mono text-flux-accent mt-0.5">
+            <div>
+              <span className="text-[10px] font-mono uppercase text-flux-muted">Poison Attempts Blocked</span>
+              <div className="text-2xl font-light font-mono text-flux-accent mt-0.5 tabular-nums">
                 {result.baseline_updates_rejected_poison_prevented.toLocaleString()}
               </div>
             </div>
           </div>
 
           {/* Chronological Decision Trace Table */}
-          <div className="p-5 rounded-xl bg-flux-surface border border-flux-border space-y-3">
-            <div className="flex items-center justify-between">
-              <h4 className="text-xs font-semibold text-flux-text flex items-center gap-2">
-                <Activity size={14} className="text-flux-accent" />
-                Chronological Decision Trace & Explainability Breakdown
-              </h4>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between pb-1 border-b border-flux-border">
+              <h2 className="text-xs font-mono uppercase tracking-wider text-flux-secondary">
+                Decision Trace & Explainability Breakdown
+              </h2>
               <span className="text-[11px] font-mono text-flux-muted">
-                Showing sample of anomalous & accepted updates
+                Online EWMA Gate Log
               </span>
             </div>
 
-            <div className="overflow-x-auto rounded-lg border border-flux-border max-h-96">
+            <div className="overflow-x-auto max-h-96 border-b border-flux-border">
               <table className="w-full text-left text-xs border-collapse">
-                <thead className="bg-flux-elevated text-flux-muted font-mono sticky top-0 z-10">
+                <thead className="bg-flux-shell text-flux-muted font-mono sticky top-0 z-10 text-[10px] uppercase">
                   <tr>
-                    <th className="p-2.5 border-b border-flux-border">Time (s)</th>
-                    <th className="p-2.5 border-b border-flux-border">Node</th>
-                    <th className="p-2.5 border-b border-flux-border">Cluster</th>
-                    <th className="p-2.5 border-b border-flux-border">Obs Rate (pps)</th>
-                    <th className="p-2.5 border-b border-flux-border">Baseline Rate</th>
-                    <th className="p-2.5 border-b border-flux-border">Contextual Z</th>
-                    <th className="p-2.5 border-b border-flux-border">Streak</th>
-                    <th className="p-2.5 border-b border-flux-border">Decision</th>
-                    <th className="p-2.5 border-b border-flux-border">Gate Action</th>
+                    <th className="px-3 py-2 border-b border-flux-border font-medium">Time (s)</th>
+                    <th className="px-3 py-2 border-b border-flux-border font-medium">Node</th>
+                    <th className="px-3 py-2 border-b border-flux-border font-medium">Cluster</th>
+                    <th className="px-3 py-2 border-b border-flux-border font-medium">Obs Rate (pps)</th>
+                    <th className="px-3 py-2 border-b border-flux-border font-medium">Baseline Rate</th>
+                    <th className="px-3 py-2 border-b border-flux-border font-medium">Contextual Z</th>
+                    <th className="px-3 py-2 border-b border-flux-border font-medium">Streak</th>
+                    <th className="px-3 py-2 border-b border-flux-border font-medium">Decision</th>
+                    <th className="px-3 py-2 border-b border-flux-border font-medium">Gate Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-flux-border font-mono text-[11px]">
+                <tbody className="divide-y divide-flux-border/40 font-mono text-[11px]">
                   {result.decision_trace.map((r, i) => {
                     const isMitigate = r.decision === 'MITIGATE_RATE_LIMIT';
                     const isSuspicious = r.decision === 'FLAG_SUSPICIOUS';
                     return (
-                      <tr key={i} className="hover:bg-flux-elevated/40 transition-colors">
-                        <td className="p-2.5 text-flux-muted">{r.timestamp}</td>
-                        <td className="p-2.5 text-flux-text font-semibold">{r.rx_id}</td>
-                        <td className="p-2.5 text-flux-muted">C{r.cluster_id}</td>
-                        <td className="p-2.5 text-flux-text">{r.raw_rate}</td>
-                        <td className="p-2.5 text-flux-muted">{r.baseline_rate}</td>
-                        <td className={`p-2.5 font-bold ${absZColor(r.z_score)}`}>{r.z_score}</td>
-                        <td className="p-2.5 text-flux-muted">{r.persistence_count}</td>
-                        <td className="p-2.5">
+                      <tr key={i} className="hover:bg-flux-subsurface/40 transition-colors">
+                        <td className="px-3 py-2 text-flux-muted">{r.timestamp}</td>
+                        <td className="px-3 py-2 text-flux-text font-medium">{r.rx_id}</td>
+                        <td className="px-3 py-2 text-flux-muted">C{r.cluster_id}</td>
+                        <td className="px-3 py-2 text-flux-text tabular-nums">{r.raw_rate}</td>
+                        <td className="px-3 py-2 text-flux-muted tabular-nums">{r.baseline_rate}</td>
+                        <td className={`px-3 py-2 font-medium tabular-nums ${absZColor(r.z_score)}`}>{r.z_score}</td>
+                        <td className="px-3 py-2 text-flux-muted tabular-nums">{r.persistence_count}</td>
+                        <td className="px-3 py-2">
                           <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${
+                            className={`px-1.5 py-0.2 rounded text-[10px] font-mono ${
                               isMitigate
-                                ? 'bg-flux-danger/15 text-flux-danger border-flux-danger/30'
+                                ? 'text-flux-danger bg-flux-danger/10'
                                 : isSuspicious
-                                ? 'bg-flux-warning/15 text-flux-warning border-flux-warning/30'
-                                : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                                ? 'text-flux-warning bg-flux-warning/10'
+                                : 'text-flux-sage bg-flux-sage/10'
                             }`}
                           >
                             {r.decision}
                           </span>
                         </td>
-                        <td className="p-2.5">
+                        <td className="px-3 py-2">
                           {r.baseline_updated ? (
-                            <span className="text-emerald-400 flex items-center gap-1">
-                              <CheckCircle2 size={12} /> Accepted
+                            <span className="text-flux-sage flex items-center gap-1">
+                              <CheckCircle2 size={11} /> Accepted
                             </span>
                           ) : (
                             <span className="text-flux-warning flex items-center gap-1">
-                              <Ban size={12} /> Blocked (Gate)
+                              <Ban size={11} /> Blocked (Gate)
                             </span>
                           )}
                         </td>
@@ -317,7 +300,7 @@ export const AcafdmView: React.FC<AcafdmViewProps> = ({ activeDataset }) => {
               </table>
             </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

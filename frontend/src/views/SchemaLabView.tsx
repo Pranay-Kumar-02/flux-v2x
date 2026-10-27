@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SlidersHorizontal, ArrowRight, CheckCircle2, Save, HelpCircle } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Save } from 'lucide-react';
 import { api, Dataset } from '../api/client';
 
 interface SchemaLabViewProps {
@@ -75,17 +75,22 @@ export const SchemaLabView: React.FC<SchemaLabViewProps> = ({ activeDataset }) =
   };
 
   return (
-    <div className="space-y-6">
-      {/* Top Banner */}
-      <div className="p-5 rounded-xl bg-flux-surface border border-flux-border flex items-center justify-between">
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+      {/* 1. Header with Controls */}
+      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-4 pb-4 border-b border-flux-border">
         <div>
-          <h3 className="text-sm font-semibold text-flux-text flex items-center gap-2">
-            <SlidersHorizontal size={16} className="text-flux-accent" />
-            VCN Canonical Schema Normalizer & Feature Lab
-          </h3>
-          <p className="text-xs text-flux-muted mt-1">
-            Map arbitrary tabular network data into normalized Vehicular Communication Network (VCN) representations
-            for destination-centric spatiotemporal clustering and RX-window aggregation.
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-[10px] font-mono tracking-widest text-flux-accent uppercase">
+              Pipeline Workbench
+            </span>
+            <span className="text-flux-muted text-[10px]">•</span>
+            <span className="text-[10px] font-mono text-flux-muted">VCN Canonical Standard</span>
+          </div>
+          <h1 className="text-xl font-medium text-flux-text tracking-tight">
+            Schema & Feature Normalizer
+          </h1>
+          <p className="text-xs text-flux-secondary mt-1 max-w-xl">
+            Map arbitrary packet columns into canonical mobility attributes (<span className="font-mono text-flux-accent">rx_x, rx_y, rx_speed, packet_rate</span>) for spatiotemporal baselining.
           </p>
         </div>
 
@@ -96,7 +101,7 @@ export const SchemaLabView: React.FC<SchemaLabViewProps> = ({ activeDataset }) =
               setSelectedDatasetId(e.target.value);
               loadSuggestions(e.target.value);
             }}
-            className="bg-flux-elevated border border-flux-border rounded-lg px-3 py-1.5 text-xs text-flux-text focus:outline-none focus:border-flux-accent font-mono"
+            className="bg-flux-surface border border-flux-border rounded px-2.5 py-1.5 text-xs text-flux-text focus:outline-none focus:border-flux-accent font-mono"
           >
             {datasets.map((d) => (
               <option key={d.id} value={d.id}>
@@ -104,64 +109,66 @@ export const SchemaLabView: React.FC<SchemaLabViewProps> = ({ activeDataset }) =
               </option>
             ))}
           </select>
+
+          <button
+            onClick={handleSaveMapping}
+            className="flux-btn-primary flex items-center gap-1.5"
+          >
+            <Save size={12} />
+            <span>Freeze & Save Mapping</span>
+          </button>
         </div>
       </div>
 
+      {savedSuccess && (
+        <div className="p-3 rounded bg-flux-sage/10 border border-flux-sage/20 text-xs text-flux-sage flex items-center gap-2">
+          <CheckCircle2 size={14} />
+          <span>Schema mapping saved and versioned as an immutable contract.</span>
+        </div>
+      )}
+
       {loading ? (
-        <div className="p-12 text-center text-xs text-flux-muted">Analyzing dataset columns...</div>
+        <div className="py-16 text-center text-xs text-flux-muted">
+          Evaluating heuristic column matches and statistical cardinality...
+        </div>
       ) : (
-        <div className="p-5 rounded-xl bg-flux-surface border border-flux-border space-y-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="text-xs font-semibold text-flux-text">Canonical Field Mappings</h4>
-              <p className="text-[11px] text-flux-muted">
-                Assign your dataset's columns to canonical research fields. Heuristic matches are preselected.
-              </p>
-            </div>
-            <button
-              onClick={handleSaveMapping}
-              className="px-4 py-2 rounded-lg bg-flux-accent text-flux-bg font-semibold text-xs hover:bg-flux-accent/90 transition-all flex items-center gap-2 shadow-sm"
-            >
-              <Save size={14} />
-              <span>Save & Freeze Schema Mapping</span>
-            </button>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between pb-1 border-b border-flux-border">
+            <h2 className="text-xs font-mono uppercase tracking-wider text-flux-secondary">
+              Canonical Column Alignment Matrix
+            </h2>
+            <span className="text-[11px] font-mono text-flux-muted">
+              {availableCols.length} columns detected
+            </span>
           </div>
 
-          {savedSuccess && (
-            <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-400 flex items-center gap-2">
-              <CheckCircle2 size={15} />
-              Schema mapping successfully saved and frozen as an immutable pipeline version!
-            </div>
-          )}
-
-          {/* Mapping Grid */}
-          <div className="overflow-x-auto rounded-lg border border-flux-border">
+          <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
-              <thead className="bg-flux-elevated text-flux-muted font-mono">
+              <thead className="bg-flux-shell text-flux-muted font-mono text-[10px] uppercase">
                 <tr>
-                  <th className="p-3 border-b border-flux-border font-medium">Source Column</th>
-                  <th className="p-3 border-b border-flux-border font-medium text-center">Mapping</th>
-                  <th className="p-3 border-b border-flux-border font-medium">Canonical Field</th>
-                  <th className="p-3 border-b border-flux-border font-medium">Expected Type & Purpose</th>
+                  <th className="px-3 py-2 border-b border-flux-border font-medium">Source Column</th>
+                  <th className="px-3 py-2 border-b border-flux-border font-medium text-center">Map</th>
+                  <th className="px-3 py-2 border-b border-flux-border font-medium">Target Canonical Attribute</th>
+                  <th className="px-3 py-2 border-b border-flux-border font-medium">Type & Functional Role</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-flux-border font-mono text-xs">
+              <tbody className="divide-y divide-flux-border/40 font-mono text-xs">
                 {availableCols.map((srcCol) => {
                   const currentMapped = suggested[srcCol] || '';
                   const canonDef = canonicalFields[currentMapped];
                   return (
-                    <tr key={srcCol} className="hover:bg-flux-elevated/40 transition-colors">
-                      <td className="p-3 font-semibold text-flux-text">{srcCol}</td>
-                      <td className="p-3 text-center text-flux-muted">
-                        <ArrowRight size={14} className="mx-auto text-flux-accent" />
+                    <tr key={srcCol} className="hover:bg-flux-subsurface/40 transition-colors">
+                      <td className="px-3 py-2.5 font-medium text-flux-text">{srcCol}</td>
+                      <td className="px-3 py-2.5 text-center text-flux-muted">
+                        <ArrowRight size={12} className="mx-auto text-flux-accent" />
                       </td>
-                      <td className="p-3">
+                      <td className="px-3 py-2.5">
                         <select
                           value={currentMapped}
                           onChange={(e) => handleMappingChange(srcCol, e.target.value)}
-                          className="bg-flux-elevated border border-flux-border rounded px-2.5 py-1 text-xs text-flux-text focus:outline-none focus:border-flux-accent font-mono"
+                          className="bg-flux-surface border border-flux-border/80 rounded px-2 py-1 text-xs text-flux-text focus:outline-none focus:border-flux-accent font-mono"
                         >
-                          <option value="">-- Ignored / Not Mapped --</option>
+                          <option value="">-- Exclude from Baseline --</option>
                           {Object.keys(canonicalFields).map((canon) => (
                             <option key={canon} value={canon}>
                               {canon} {canonicalFields[canon].required ? '*' : ''}
@@ -169,14 +176,14 @@ export const SchemaLabView: React.FC<SchemaLabViewProps> = ({ activeDataset }) =
                           ))}
                         </select>
                       </td>
-                      <td className="p-3 text-flux-muted text-[11px] font-sans">
+                      <td className="px-3 py-2.5 text-flux-secondary text-[11px] font-sans">
                         {canonDef ? (
                           <span>
-                            <strong className="font-mono text-flux-accent font-normal mr-2">[{canonDef.type}]</strong>
+                            <strong className="font-mono text-flux-accent font-medium mr-1.5">[{canonDef.type}]</strong>
                             {canonDef.description}
                           </span>
                         ) : (
-                          <span className="text-flux-muted/50">Feature will be excluded from contextual baseline calculation</span>
+                          <span className="text-flux-muted">Excluded from baseline calculation</span>
                         )}
                       </td>
                     </tr>
