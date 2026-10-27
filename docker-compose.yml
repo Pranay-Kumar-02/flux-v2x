@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16-alpine
@@ -8,7 +6,7 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-fluxv2x_db}
       POSTGRES_USER: ${POSTGRES_USER:-fluxv2x_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?CRITICAL: POSTGRES_PASSWORD must be provided via environment variable}
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?CRITICAL: POSTGRES_PASSWORD must be provided via environment variable}"
     # Internal network only: database port 5432 is NOT published to host in production
     networks:
       - fluxv2x-network
@@ -40,11 +38,11 @@ services:
     restart: unless-stopped
     stop_grace_period: 30s
     environment:
-      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-fluxv2x_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-fluxv2x_db}
+      DATABASE_URL: "postgresql+psycopg2://${POSTGRES_USER:-fluxv2x_user}:${POSTGRES_PASSWORD:?CRITICAL: POSTGRES_PASSWORD must be provided via environment variable}@postgres:5432/${POSTGRES_DB:-fluxv2x_db}"
       REDIS_URL: redis://redis:6379/0
       ENVIRONMENT: production
       DEBUG: "false"
-      SECRET_KEY: ${SECRET_KEY:?CRITICAL: Cryptographically strong SECRET_KEY must be provided via environment variable}
+      SECRET_KEY: "${SECRET_KEY:?CRITICAL: Cryptographically strong SECRET_KEY must be provided via environment variable}"
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://your-domain.com}
       AUTO_LOAD_DEMO_DATASET: "false"
       ENABLE_DEV_BOOTSTRAP: "false"
