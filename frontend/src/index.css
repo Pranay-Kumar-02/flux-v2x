@@ -2,8 +2,93 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+/* =========================================================================
+   FluxV2X Multi-Theme Design Tokens & Atmospheric Variable System
+   1. Obsidian Black (Restored Preferred Theme: deep black/charcoal & teal)
+   2. Gold / Bronze (Warm dark editorial aesthetic with champagne highlights)
+   3. Light Minimal (Clean, high-contrast, professional slate workspace)
+   4. Graphite (Understated neutral dark grey with platinum silver accents)
+   ========================================================================= */
+
+:root,
+[data-theme="obsidian"] {
   color-scheme: dark;
+
+  /* RGB Triplets for Tailwind /alpha-value utility resolution */
+  --flux-bg-rgb: 11, 15, 20;
+  --flux-shell-rgb: 7, 10, 14;
+  --flux-surface-rgb: 17, 24, 33;
+  --flux-subsurface-rgb: 12, 17, 24;
+  --flux-elevated-rgb: 23, 33, 43;
+  --flux-hover-rgb: 30, 42, 55;
+  --flux-border-rgb: 34, 49, 66;
+  --flux-text-rgb: 241, 245, 249;
+  --flux-secondary-rgb: 148, 163, 184;
+  --flux-muted-rgb: 100, 116, 139;
+  --flux-accent-rgb: 45, 212, 191;
+  --flux-champagne-rgb: 56, 189, 248;
+  --flux-sage-rgb: 52, 211, 153;
+  --flux-warning-rgb: 245, 158, 11;
+  --flux-danger-rgb: 239, 68, 68;
+  --flux-info-rgb: 96, 165, 250;
+
+  /* Formatted CSS Colors */
+  --flux-bg: #0B0F14;
+  --flux-shell: #070A0E;
+  --flux-surface: #111821;
+  --flux-subsurface: #0C1118;
+  --flux-elevated: #17212B;
+  --flux-hover: #1E2A37;
+  --flux-border: #223142;
+  --flux-text: #F1F5F9;
+  --flux-secondary: #94A3B8;
+  --flux-muted: #64748B;
+  --flux-accent: #2DD4BF;
+  --flux-champagne: #38BDF8;
+  --flux-sage: #34D399;
+  --flux-warning: #F59E0B;
+  --flux-danger: #EF4444;
+  --flux-info: #60A5FA;
+
+  /* Atmospheric & Component Overrides */
+  --flux-body-bg: #0B0F14;
+  --flux-body-bg-gradient: 
+    radial-gradient(circle 800px at 50% -120px, rgba(45, 212, 191, 0.035) 0%, transparent 70%),
+    radial-gradient(circle 600px at 90% 20%, rgba(56, 189, 248, 0.02) 0%, transparent 60%),
+    linear-gradient(180deg, #0B0F14 0%, #070A0E 100%);
+  --flux-panel-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.55);
+  --flux-panel-border: rgba(255, 255, 255, 0.05);
+  --flux-panel-focal-gradient: radial-gradient(ellipse 70% 40% at 50% 0%, rgba(45, 212, 191, 0.05), transparent 70%);
+  --flux-panel-focal-border: rgba(45, 212, 191, 0.15);
+  --flux-panel-focal-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.65);
+  --flux-inset-border: rgba(255, 255, 255, 0.04);
+  --flux-btn-primary-bg: linear-gradient(180deg, #2DD4BF 0%, #0D9488 100%);
+  --flux-btn-primary-text: #051311;
+  --flux-btn-primary-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  --flux-scrollbar-thumb: #17212B;
+  --flux-scrollbar-thumb-hover: #223142;
+}
+
+[data-theme="gold"] {
+  color-scheme: dark;
+
+  --flux-bg-rgb: 9, 9, 9;
+  --flux-shell-rgb: 11, 11, 10;
+  --flux-surface-rgb: 18, 17, 16;
+  --flux-subsurface-rgb: 24, 23, 21;
+  --flux-elevated-rgb: 30, 29, 26;
+  --flux-hover-rgb: 36, 34, 31;
+  --flux-border-rgb: 38, 36, 32;
+  --flux-text-rgb: 242, 239, 235;
+  --flux-secondary-rgb: 184, 178, 168;
+  --flux-muted-rgb: 128, 122, 112;
+  --flux-accent-rgb: 176, 144, 108;
+  --flux-champagne-rgb: 200, 178, 145;
+  --flux-sage-rgb: 138, 153, 131;
+  --flux-warning-rgb: 196, 146, 74;
+  --flux-danger-rgb: 184, 89, 81;
+  --flux-info-rgb: 126, 143, 150;
+
   --flux-bg: #090909;
   --flux-shell: #0B0B0A;
   --flux-surface: #121110;
@@ -20,25 +105,146 @@
   --flux-warning: #C4924A;
   --flux-danger: #B85951;
   --flux-info: #7E8F96;
+
+  --flux-body-bg: #090909;
+  --flux-body-bg-gradient: 
+    radial-gradient(circle 800px at 50% -120px, rgba(176, 144, 108, 0.05) 0%, transparent 70%),
+    radial-gradient(circle 600px at 90% 20%, rgba(138, 153, 131, 0.025) 0%, transparent 60%),
+    linear-gradient(180deg, #090909 0%, #0d0c0b 100%);
+  --flux-panel-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45);
+  --flux-panel-border: rgba(255, 255, 255, 0.045);
+  --flux-panel-focal-gradient: radial-gradient(ellipse 70% 40% at 50% 0%, rgba(200, 178, 145, 0.045), transparent 70%);
+  --flux-panel-focal-border: rgba(255, 255, 255, 0.055);
+  --flux-panel-focal-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.55);
+  --flux-inset-border: rgba(255, 255, 255, 0.035);
+  --flux-btn-primary-bg: linear-gradient(180deg, #C8B291 0%, #B0906C 100%);
+  --flux-btn-primary-text: #090909;
+  --flux-btn-primary-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  --flux-scrollbar-thumb: #24221F;
+  --flux-scrollbar-thumb-hover: #302E29;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  --flux-bg-rgb: 248, 250, 252;
+  --flux-shell-rgb: 255, 255, 255;
+  --flux-surface-rgb: 255, 255, 255;
+  --flux-subsurface-rgb: 241, 245, 249;
+  --flux-elevated-rgb: 226, 232, 240;
+  --flux-hover-rgb: 226, 232, 240;
+  --flux-border-rgb: 203, 213, 225;
+  --flux-text-rgb: 15, 23, 42;
+  --flux-secondary-rgb: 71, 85, 105;
+  --flux-muted-rgb: 100, 116, 139;
+  --flux-accent-rgb: 37, 99, 235;
+  --flux-champagne-rgb: 2, 132, 199;
+  --flux-sage-rgb: 22, 163, 74;
+  --flux-warning-rgb: 217, 119, 6;
+  --flux-danger-rgb: 220, 38, 38;
+  --flux-info-rgb: 2, 132, 199;
+
+  --flux-bg: #F8FAFC;
+  --flux-shell: #FFFFFF;
+  --flux-surface: #FFFFFF;
+  --flux-subsurface: #F1F5F9;
+  --flux-elevated: #E2E8F0;
+  --flux-hover: #E2E8F0;
+  --flux-border: #CBD5E1;
+  --flux-text: #0F172A;
+  --flux-secondary: #475569;
+  --flux-muted: #64748B;
+  --flux-accent: #2563EB;
+  --flux-champagne: #0284C7;
+  --flux-sage: #16A34A;
+  --flux-warning: #D97706;
+  --flux-danger: #DC2626;
+  --flux-info: #0284C7;
+
+  --flux-body-bg: #F8FAFC;
+  --flux-body-bg-gradient: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);
+  --flux-panel-shadow: 0 2px 8px -1px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+  --flux-panel-border: #CBD5E1;
+  --flux-panel-focal-gradient: radial-gradient(ellipse 70% 40% at 50% 0%, rgba(37, 99, 235, 0.04), transparent 70%);
+  --flux-panel-focal-border: #93C5FD;
+  --flux-panel-focal-shadow: 0 4px 14px -2px rgba(37, 99, 235, 0.1);
+  --flux-inset-border: #CBD5E1;
+  --flux-btn-primary-bg: linear-gradient(180deg, #1E293B 0%, #0F172A 100%);
+  --flux-btn-primary-text: #FFFFFF;
+  --flux-btn-primary-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  --flux-scrollbar-thumb: #CBD5E1;
+  --flux-scrollbar-thumb-hover: #94A3B8;
+}
+
+[data-theme="graphite"] {
+  color-scheme: dark;
+
+  --flux-bg-rgb: 18, 18, 20;
+  --flux-shell-rgb: 22, 22, 24;
+  --flux-surface-rgb: 28, 28, 32;
+  --flux-subsurface-rgb: 35, 35, 40;
+  --flux-elevated-rgb: 42, 42, 48;
+  --flux-hover-rgb: 50, 50, 58;
+  --flux-border-rgb: 51, 51, 60;
+  --flux-text-rgb: 237, 237, 240;
+  --flux-secondary-rgb: 161, 161, 170;
+  --flux-muted-rgb: 113, 113, 122;
+  --flux-accent-rgb: 212, 212, 216;
+  --flux-champagne-rgb: 228, 228, 231;
+  --flux-sage-rgb: 52, 211, 153;
+  --flux-warning-rgb: 251, 191, 36;
+  --flux-danger-rgb: 248, 113, 113;
+  --flux-info-rgb: 148, 163, 184;
+
+  --flux-bg: #121214;
+  --flux-shell: #161618;
+  --flux-surface: #1C1C20;
+  --flux-subsurface: #232328;
+  --flux-elevated: #2A2A30;
+  --flux-hover: #32323A;
+  --flux-border: #33333C;
+  --flux-text: #EDEDF0;
+  --flux-secondary: #A1A1AA;
+  --flux-muted: #71717A;
+  --flux-accent: #D4D4D8;
+  --flux-champagne: #E4E4E7;
+  --flux-sage: #34D399;
+  --flux-warning: #FBBF24;
+  --flux-danger: #F87171;
+  --flux-info: #94A3B8;
+
+  --flux-body-bg: #121214;
+  --flux-body-bg-gradient: 
+    radial-gradient(circle 800px at 50% -120px, rgba(255, 255, 255, 0.02) 0%, transparent 70%),
+    linear-gradient(180deg, #121214 0%, #0e0e10 100%);
+  --flux-panel-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+  --flux-panel-border: rgba(255, 255, 255, 0.05);
+  --flux-panel-focal-gradient: radial-gradient(ellipse 70% 40% at 50% 0%, rgba(255, 255, 255, 0.035), transparent 70%);
+  --flux-panel-focal-border: rgba(255, 255, 255, 0.08);
+  --flux-panel-focal-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.6);
+  --flux-inset-border: rgba(255, 255, 255, 0.04);
+  --flux-btn-primary-bg: linear-gradient(180deg, #E4E4E7 0%, #A1A1AA 100%);
+  --flux-btn-primary-text: #121214;
+  --flux-btn-primary-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  --flux-scrollbar-thumb: #2A2A30;
+  --flux-scrollbar-thumb-hover: #33333C;
 }
 
 body {
   margin: 0;
   padding: 0;
-  background-color: #090909;
-  color: #F2EFEB;
+  background-color: var(--flux-body-bg);
+  color: var(--flux-text);
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
-  background-image: 
-    radial-gradient(circle 800px at 50% -120px, rgba(176, 144, 108, 0.05) 0%, transparent 70%),
-    radial-gradient(circle 600px at 90% 20%, rgba(138, 153, 131, 0.025) 0%, transparent 60%),
-    linear-gradient(180deg, #090909 0%, #0d0c0b 100%);
+  background-image: var(--flux-body-bg-gradient);
   background-attachment: fixed;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Subtle, sophisticated scrollbars */
+/* Subtle, theme-aware scrollbars */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;
@@ -47,11 +253,11 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #24221F;
+  background: var(--flux-scrollbar-thumb);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #302E29;
+  background: var(--flux-scrollbar-thumb-hover);
 }
 
 /* Tabular figures for technical metrics and numbers */
@@ -61,38 +267,41 @@ body {
 
 /* Selective Elevated Surface Container */
 .flux-panel {
-  background-color: #121110;
-  border: 1px solid rgba(255, 255, 255, 0.045);
+  background-color: var(--flux-surface);
+  border: 1px solid var(--flux-panel-border);
   border-radius: 0.75rem;
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--flux-panel-shadow);
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 /* Primary Focal Panel with Soft Radial Accent Illumination */
 .flux-panel-focal {
-  background-color: #121110;
-  background-image: radial-gradient(ellipse 70% 40% at 50% 0%, rgba(200, 178, 145, 0.045), transparent 70%);
-  border: 1px solid rgba(255, 255, 255, 0.055);
+  background-color: var(--flux-surface);
+  background-image: var(--flux-panel-focal-gradient);
+  border: 1px solid var(--flux-panel-focal-border);
   border-radius: 0.75rem;
-  box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.55);
+  box-shadow: var(--flux-panel-focal-shadow);
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 /* Recessed Inset Container for Tables & Data Plots */
 .flux-inset {
-  background-color: #0C0B0A;
-  border: 1px solid rgba(255, 255, 255, 0.035);
+  background-color: var(--flux-subsurface);
+  border: 1px solid var(--flux-inset-border);
   border-radius: 0.5rem;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-/* Primary Action Button (Champagne to Bronze Gradient) */
+/* Primary Action Button */
 .flux-btn-primary {
-  background: linear-gradient(180deg, #C8B291 0%, #B0906C 100%);
-  color: #090909;
+  background: var(--flux-btn-primary-bg);
+  color: var(--flux-btn-primary-text);
   font-weight: 500;
   font-size: 0.75rem;
   padding: 0.4rem 0.85rem;
   border-radius: 0.375rem;
   transition: opacity 0.15s ease, transform 0.1s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  box-shadow: var(--flux-btn-primary-shadow);
 }
 .flux-btn-primary:hover {
   opacity: 0.94;
@@ -103,24 +312,24 @@ body {
 
 /* Secondary Button */
 .flux-btn-secondary {
-  background: #181715;
-  color: #F2EFEB;
+  background: var(--flux-elevated);
+  color: var(--flux-text);
   font-weight: 500;
   font-size: 0.75rem;
   padding: 0.4rem 0.85rem;
   border-radius: 0.375rem;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--flux-border);
   transition: all 0.15s ease;
 }
 .flux-btn-secondary:hover {
-  background: #201F1C;
-  border-color: rgba(255, 255, 255, 0.1);
+  background: var(--flux-hover);
+  border-color: var(--flux-accent);
 }
 
 /* Ghost Action Button */
 .flux-btn-ghost {
   background: transparent;
-  color: #B8B2A8;
+  color: var(--flux-secondary);
   font-size: 0.75rem;
   font-weight: 400;
   padding: 0.35rem 0.65rem;
@@ -128,6 +337,6 @@ body {
   transition: all 0.15s ease;
 }
 .flux-btn-ghost:hover {
-  background: #181715;
-  color: #F2EFEB;
+  background: var(--flux-elevated);
+  color: var(--flux-text);
 }

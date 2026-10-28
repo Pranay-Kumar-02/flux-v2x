@@ -12,8 +12,9 @@ import { MitigationSimulatorView } from './views/MitigationSimulatorView';
 import { ExperimentInspectorView } from './views/ExperimentInspectorView';
 import { AuditView } from './views/AuditView';
 import { api, Dataset } from './api/client';
+import { ThemeProvider } from './context/ThemeContext';
 
-export const App: React.FC = () => {
+const AppContent: React.FC = () => {
   const [currentView, setCurrentView] = useState<NavView>('overview');
   const [activeDataset, setActiveDataset] = useState<Dataset | null>(null);
 
@@ -77,7 +78,7 @@ export const App: React.FC = () => {
   const currentMeta = viewTitles[currentView];
 
   return (
-    <div className="flex h-screen bg-flux-bg text-flux-text overflow-hidden font-sans">
+    <div className="flex h-screen bg-flux-bg text-flux-text overflow-hidden font-sans transition-colors duration-200">
       {/* Sidebar Navigation */}
       <Sidebar currentView={currentView} onNavigate={setCurrentView} />
 
@@ -109,6 +110,14 @@ export const App: React.FC = () => {
         </main>
       </div>
     </div>
+  );
+};
+
+export const App: React.FC = () => {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 };
 

@@ -23,7 +23,10 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
 
     # Database
-    DATABASE_URL: str = "sqlite:///./fluxv2x.db"
+    DATABASE_URL: str = os.getenv(
+        "DATABASE_URL",
+        f"sqlite:///{os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../backend/fluxv2x.db'))}"
+    )
 
     # CORS
     ALLOWED_ORIGINS: Union[str, List[str]] = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://localhost:8000"

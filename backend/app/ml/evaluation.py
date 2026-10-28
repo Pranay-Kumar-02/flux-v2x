@@ -26,54 +26,77 @@ class EvaluationEngine:
         y_prob: Optional[np.ndarray] = None
     ) -> Dict[str, Any]:
         """
-        Compute standard and class-specific metrics, confusion matrix, and curve points.
+        Compute standard and class-specific metrics, confusion matrix, specificity, and curve points.
+        Reconciles all metrics directly with the confusion matrix.
+        Never replaces undefined denominators with 100%.
         """
-        y_true = np.asarray(y_true, dtype=int)
-        y_pred = np.asarray(y_pred, dtype=int)
+        y_true = np.asarray(y_true, dtype=int).ravel()
+        y_pred = np.asarray(y_pred, dtype=int).ravel()
 
-        acc = float(accuracy_score(y_true, y_pred))
-        prec = float(precision_score(y_true, y_pred, zero_division=0))
-        rec = float(recall_score(y_true, y_pred, zero_division=0))
-        macro_f1 = float(f1_score(y_true, y_pred, average="macro", zero_division=0))
-        malicious_f1 = float(f1_score(y_true, y_pred, pos_label=1, zero_division=0))
+        if len(y_true) != len(y_pred):
+            raise ValueError(
+                f"Length mismatch: y_true ({len(y_true)}) and y_pred ({len(y_pred)}) must have identical lengths."
+            )
 
         cm = confusion_matrix(y_true, y_pred, labels=[0, 1])
         tn, fp, fn, tp = int(cm[0, 0]), int(cm[0, 1]), int(cm[1, 0]), int(cm[1, 1])
+        total = tn + fp + fn + tp
 
-        fpr = round(fp / (fp + tn), 4) if (fp + tn) > 0 else 0.0
-        fnr = round(fn / (fn + tp), 4) if (fn + tp) > 0 else 0.0
+        acc = (tp + tn) / total if total > 0 else 0.0
+        prec = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+        rec = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+        spec = tn / (tn + fp) if (tn + fp) > 0 else 0.0
+        fpr = fp / (fp + tn) if (fp + tn) > 0 else 0.0
+        fnr = fn / (fn + tp) if (fn + tp) > 0 else 0.0
+
+        if (prec + rec) > 0:
+            malicious_f1 = 2.0 * (prec * rec) / (prec + rec)
+        else:
+            malicious_f1 = 0.0
+
+        # Class 0 (benign) metrics for unweighted macro F1
+        prec_0 = tn / (tn + fn) if (tn + fn) > 0 else 0.0
+        rec_0 = tn / (tn + fp) if (tn + fp) > 0 else 0.0
+        f1_0 = (2.0 * prec_0 * rec_0 / (prec_0 + rec_0)) if (prec_0 + rec_0) > 0 else 0.0
+        macro_f1 = (malicious_f1 + f1_0) / 2.0
 
         roc_auc = None
         pr_auc = None
         roc_pts: List[Dict[str, float]] = []
         pr_pts: List[Dict[str, float]] = []
 
-        if y_prob is not None and len(np.unique(y_true)) > 1:
-            try:
-                roc_auc = float(roc_auc_score(y_true, y_prob))
-                pr_auc = float(average_precision_score(y_true, y_prob))
+        if y_prob is not None:
+            prob_arr = np.asarray(y_prob)
+            if prob_arr.ndim == 2 and prob_arr.shape[1] >= 2:
+                prob_arr = prob_arr[:, 1]
+            prob_arr = prob_arr.ravel()
 
-                fpr_vals, tpr_vals, _ = roc_curve(y_true, y_prob)
-                # Sample down points if too large
-                step = max(1, len(fpr_vals) // 50)
-                for i in range(0, len(fpr_vals), step):
-                    roc_pts.append({"fpr": round(float(fpr_vals[i]), 4), "tpr": round(float(tpr_vals[i]), 4)})
+            if len(np.unique(y_true)) > 1 and len(prob_arr) == len(y_true):
+                try:
+                    roc_auc = float(roc_auc_score(y_true, prob_arr))
+                    pr_auc = float(average_precision_score(y_true, prob_arr))
 
-                p_vals, r_vals, _ = precision_recall_curve(y_true, y_prob)
-                step_pr = max(1, len(p_vals) // 50)
-                for i in range(0, len(p_vals), step_pr):
-                    pr_pts.append({"recall": round(float(r_vals[i]), 4), "precision": round(float(p_vals[i]), 4)})
-            except Exception as exc:
-                logger.debug("ROC/PR curve computation skipped: %s", exc)
+                    fpr_vals, tpr_vals, _ = roc_curve(y_true, prob_arr)
+                    step = max(1, len(fpr_vals) // 50)
+                    for i in range(0, len(fpr_vals), step):
+                        roc_pts.append({"fpr": round(float(fpr_vals[i]), 4), "tpr": round(float(tpr_vals[i]), 4)})
+
+                    p_vals, r_vals, _ = precision_recall_curve(y_true, prob_arr)
+                    step_pr = max(1, len(p_vals) // 50)
+                    for i in range(0, len(p_vals), step_pr):
+                        pr_pts.append({"recall": round(float(r_vals[i]), 4), "precision": round(float(p_vals[i]), 4)})
+                except Exception as exc:
+                    logger.debug("ROC/PR curve computation skipped: %s", exc)
 
         return {
             "accuracy": round(acc, 4),
             "precision": round(prec, 4),
             "recall": round(rec, 4),
+            "specificity": round(spec, 4),
             "macro_f1": round(macro_f1, 4),
             "malicious_f1": round(malicious_f1, 4),
-            "false_positive_rate": fpr,
-            "false_negative_rate": fnr,
+            "false_positive_rate": round(fpr, 4),
+            "false_negative_rate": round(fnr, 4),
             "roc_auc": round(roc_auc, 4) if roc_auc is not None else None,
             "pr_auc": round(pr_auc, 4) if pr_auc is not None else None,
             "confusion_matrix": {

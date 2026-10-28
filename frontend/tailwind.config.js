@@ -1,4 +1,14 @@
 /** @type {import('tailwindcss').Config} */
+
+function withOpacity(variableName) {
+  return ({ opacityValue }) => {
+    if (opacityValue !== undefined) {
+      return `rgba(var(${variableName}), ${opacityValue})`;
+    }
+    return `rgb(var(${variableName}))`;
+  };
+}
+
 export default {
   content: [
     "./index.html",
@@ -9,26 +19,26 @@ export default {
     extend: {
       colors: {
         flux: {
-          bg: '#090909',         // Deep Obsidian application background
-          shell: '#0B0B0A',      // Navigation / shell background
-          nav: '#0B0B0A',        // Navigation background
-          surface: '#121110',    // Elevated primary work surface
-          subsurface: '#181715', // Secondary container surface
-          elevated: '#1E1D1A',   // Elevated interaction surface / hover
-          hover: '#24221F',      // Warm hover surface
-          border: '#262420',     // Low-contrast warm hairline separator
-          separator: '#262420',  // Low-contrast separator
-          text: '#F2EFEB',       // Primary warm off-white typography
-          secondary: '#B8B2A8',  // Secondary descriptive copy
-          muted: '#807A70',      // Muted metadata
-          accent: '#B0906C',     // Muted warm bronze
-          bronze: '#B0906C',     // Muted warm bronze
-          champagne: '#C8B291',  // Soft champagne highlight
-          sage: '#8A9983',       // Muted sage for neutral-positive & health
-          success: '#8A9983',    // Semantic success
-          warning: '#C4924A',    // Accessible warm amber
-          danger: '#B85951',     // Restrained red for security anomalies
-          info: '#7E8F96',       // Neutral slate
+          bg: withOpacity('--flux-bg-rgb'),
+          shell: withOpacity('--flux-shell-rgb'),
+          nav: withOpacity('--flux-shell-rgb'),
+          surface: withOpacity('--flux-surface-rgb'),
+          subsurface: withOpacity('--flux-subsurface-rgb'),
+          elevated: withOpacity('--flux-elevated-rgb'),
+          hover: withOpacity('--flux-hover-rgb'),
+          border: withOpacity('--flux-border-rgb'),
+          separator: withOpacity('--flux-border-rgb'),
+          text: withOpacity('--flux-text-rgb'),
+          secondary: withOpacity('--flux-secondary-rgb'),
+          muted: withOpacity('--flux-muted-rgb'),
+          accent: withOpacity('--flux-accent-rgb'),
+          bronze: withOpacity('--flux-accent-rgb'),
+          champagne: withOpacity('--flux-champagne-rgb'),
+          sage: withOpacity('--flux-sage-rgb'),
+          success: withOpacity('--flux-sage-rgb'),
+          warning: withOpacity('--flux-warning-rgb'),
+          danger: withOpacity('--flux-danger-rgb'),
+          info: withOpacity('--flux-info-rgb'),
         }
       },
       fontFamily: {

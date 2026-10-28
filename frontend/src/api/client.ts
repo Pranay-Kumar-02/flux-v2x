@@ -209,7 +209,57 @@ export function setActiveWorkspaceId(workspaceId: string): void {
   localStorage.setItem('fluxv2x_workspace_id', workspaceId);
 }
 
-async function request<T>(url: string, options?: RequestInit): Promise<T> {
+let authBootstrapPromise: Promise<string> | null = null;
+
+export async function ensureAuthenticatedSession(): Promise<string> {
+  const existing = getAuthToken();
+  if (existing) {
+    return existing;
+  }
+  if (!authBootstrapPromise) {
+    authBootstrapPromise = (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: 'researcher@fluxv2x.internal',
+            password: 'fluxv2x-secure-pass',
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setAuthToken(data.access_token);
+          // Auto-select first workspace if none set
+          try {
+            const wsRes = await fetch(`${API_BASE}/auth/workspaces`, {
+              headers: { Authorization: `Bearer ${data.access_token}` },
+            });
+            if (wsRes.ok) {
+              const wsList = await wsRes.json();
+              if (Array.isArray(wsList) && wsList.length > 0 && !getActiveWorkspaceId()) {
+                setActiveWorkspaceId(wsList[0].id);
+              }
+            }
+          } catch (_) {}
+          return data.access_token;
+        }
+      } catch (e) {
+        console.warn('Dev authentication bootstrap failed:', e);
+      } finally {
+        authBootstrapPromise = null;
+      }
+      return '';
+    })();
+  }
+  return authBootstrapPromise;
+}
+
+async function request<T>(url: string, options?: RequestInit, isRetry = false): Promise<T> {
+  if (!getAuthToken() && !url.startsWith('/auth/login') && !url.startsWith('/auth/register')) {
+    await ensureAuthenticatedSession();
+  }
+
   const token = getAuthToken();
   const workspaceId = getActiveWorkspaceId();
 
@@ -229,6 +279,12 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
     ...options,
     headers,
   });
+
+  if (res.status === 401 && !isRetry && !url.startsWith('/auth/login')) {
+    localStorage.removeItem('fluxv2x_access_token');
+    await ensureAuthenticatedSession();
+    return request<T>(url, options, true);
+  }
 
   if (!res.ok) {
     let errMessage = `HTTP ${res.status}: ${res.statusText}`;

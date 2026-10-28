@@ -2,12 +2,16 @@ import React, { useState, useEffect } from 'react';
 import ReactECharts from 'echarts-for-react';
 import { Compass, Layers } from 'lucide-react';
 import { api, Dataset } from '../api/client';
+import { useTheme } from '../context/ThemeContext';
+import { getChartTokens } from '../utils/chartTheme';
 
 interface ContextExplorerViewProps {
   activeDataset?: Dataset | null;
 }
 
 export const ContextExplorerView: React.FC<ContextExplorerViewProps> = ({ activeDataset }) => {
+  const { theme } = useTheme();
+  const ct = getChartTokens(theme);
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [selectedDatasetId, setSelectedDatasetId] = useState<string>('');
   const [contextData, setContextData] = useState<any>(null);
@@ -56,26 +60,25 @@ export const ContextExplorerView: React.FC<ContextExplorerViewProps> = ({ active
       p.dst_id,
     ]);
 
-    // Muted, restrained series colors
-    const clusterColors = ['#B0906C', '#8A9983', '#C8B291', '#7E8F96', '#656057'];
+    const clusterColors = ct.palette;
 
     return {
       backgroundColor: 'transparent',
       tooltip: {
         trigger: 'item',
-        backgroundColor: '#0C0B0A',
-        borderColor: 'rgba(255, 255, 255, 0.08)',
+        backgroundColor: ct.tooltipBg,
+        borderColor: ct.tooltipBorder,
         borderWidth: 1,
-        textStyle: { color: '#F2EFEB', fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        textStyle: { color: ct.tooltipText, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
         formatter: (params: any) => {
           const d = params.value;
           return `
-            <div style="font-weight: 500; color: #F2EFEB; margin-bottom: 2px;">Receiver Node: ${d[6]}</div>
-            <div style="color: #807A70;">Position: (${d[0]}, ${d[1]})</div>
-            <div style="color: #807A70;">Cluster: C${d[2]} • Rate: ${d[4]} pps</div>
-            <div style="color: #807A70;">Contextual Z-Score: ${d[5]}</div>
+            <div style="font-weight: 500; color: ${ct.tooltipText}; margin-bottom: 2px;">Receiver Node: ${d[6]}</div>
+            <div style="color: ${ct.axisLabel};">Position: (${d[0]}, ${d[1]})</div>
+            <div style="color: ${ct.axisLabel};">Cluster: C${d[2]} • Rate: ${d[4]} pps</div>
+            <div style="color: ${ct.axisLabel};">Contextual Z-Score: ${d[5]}</div>
             <div style="margin-top: 4px; font-weight: 500;">
-              ${d[3] === 1 ? '<span style="color:#B85951">Malicious Flood (1)</span>' : '<span style="color:#8A9983">Benign Congestion (0)</span>'}
+              ${d[3] === 1 ? '<span style="color:#EF4444">Malicious Flood (1)</span>' : '<span style="color:#22C55E">Benign Congestion (0)</span>'}
             </div>
           `;
         },
@@ -83,17 +86,17 @@ export const ContextExplorerView: React.FC<ContextExplorerViewProps> = ({ active
       grid: { left: '4%', right: '3%', top: '6%', bottom: '10%' },
       xAxis: {
         name: contextData.has_spatial_coordinates ? 'Receiver X (m)' : 'Timestamp (s)',
-        nameTextStyle: { color: '#807A70', fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
-        axisLine: { lineStyle: { color: '#262420' } },
-        splitLine: { lineStyle: { color: '#161513' } },
-        axisLabel: { color: '#807A70', fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        nameTextStyle: { color: ct.nameText, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        axisLine: { lineStyle: { color: ct.axisLine } },
+        splitLine: { lineStyle: { color: ct.splitLine } },
+        axisLabel: { color: ct.axisLabel, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
       },
       yAxis: {
         name: contextData.has_spatial_coordinates ? 'Receiver Y (m)' : 'Packet Rate (pps)',
-        nameTextStyle: { color: '#807A70', fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
-        axisLine: { lineStyle: { color: '#262420' } },
-        splitLine: { lineStyle: { color: '#161513' } },
-        axisLabel: { color: '#807A70', fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        nameTextStyle: { color: ct.nameText, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        axisLine: { lineStyle: { color: ct.axisLine } },
+        splitLine: { lineStyle: { color: ct.splitLine } },
+        axisLabel: { color: ct.axisLabel, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
       },
       series: [
         {
@@ -103,7 +106,7 @@ export const ContextExplorerView: React.FC<ContextExplorerViewProps> = ({ active
           itemStyle: {
             color: (params: any) => {
               if (colorBy === 'label') {
-                return params.value[3] === 1 ? '#B85951' : '#8A9983';
+                return params.value[3] === 1 ? '#EF4444' : '#22C55E';
               }
               return clusterColors[params.value[2] % clusterColors.length];
             },
@@ -125,30 +128,30 @@ export const ContextExplorerView: React.FC<ContextExplorerViewProps> = ({ active
       backgroundColor: 'transparent',
       tooltip: {
         trigger: 'axis',
-        backgroundColor: '#0C0B0A',
-        borderColor: 'rgba(255, 255, 255, 0.08)',
-        textStyle: { color: '#F2EFEB', fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        backgroundColor: ct.tooltipBg,
+        borderColor: ct.tooltipBorder,
+        textStyle: { color: ct.tooltipText, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
       },
       grid: { left: '8%', right: '4%', top: '12%', bottom: '18%' },
       xAxis: {
         type: 'category',
         data: scenarios.map((s) => s.replace(/_/g, ' ')),
-        axisLabel: { color: '#807A70', fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
-        axisLine: { lineStyle: { color: '#262420' } },
+        axisLabel: { color: ct.axisLabel, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        axisLine: { lineStyle: { color: ct.axisLine } },
       },
       yAxis: {
         type: 'value',
         name: 'Rate (pps)',
-        nameTextStyle: { color: '#807A70', fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
-        splitLine: { lineStyle: { color: '#161513' } },
-        axisLabel: { color: '#807A70', fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        nameTextStyle: { color: ct.nameText, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        splitLine: { lineStyle: { color: ct.splitLine } },
+        axisLabel: { color: ct.axisLabel, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
       },
       series: [
         {
           name: 'Mean Rate',
           type: 'bar',
           data: avgRates,
-          itemStyle: { color: '#B0906C', borderRadius: [3, 3, 0, 0] },
+          itemStyle: { color: ct.accent, borderRadius: [3, 3, 0, 0] },
         },
       ],
     };
@@ -235,7 +238,7 @@ export const ContextExplorerView: React.FC<ContextExplorerViewProps> = ({ active
                 </div>
 
                 <div className="h-96 w-full">
-                  <ReactECharts option={getScatterOption()} style={{ height: '100%', width: '100%' }} />
+                  <ReactECharts option={getScatterOption()} notMerge={true} style={{ height: '100%', width: '100%' }} />
                 </div>
               </div>
 
@@ -251,7 +254,7 @@ export const ContextExplorerView: React.FC<ContextExplorerViewProps> = ({ active
                 </div>
 
                 <div className="h-80 w-full my-auto">
-                  <ReactECharts option={getScenarioBarOption()} style={{ height: '100%', width: '100%' }} />
+                  <ReactECharts option={getScenarioBarOption()} notMerge={true} style={{ height: '100%', width: '100%' }} />
                 </div>
 
                 <div className="text-[11px] text-flux-secondary pt-2 border-t border-flux-border/40">

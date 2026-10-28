@@ -2,12 +2,16 @@ import React, { useState, useEffect } from 'react';
 import ReactECharts from 'echarts-for-react';
 import { Play, RotateCcw, Cpu } from 'lucide-react';
 import { api, Dataset, Experiment } from '../api/client';
+import { useTheme } from '../context/ThemeContext';
+import { getChartTokens } from '../utils/chartTheme';
 
 interface ModelLabViewProps {
   activeDataset?: Dataset | null;
 }
 
 export const ModelLabView: React.FC<ModelLabViewProps> = ({ activeDataset }) => {
+  const { theme } = useTheme();
+  const ct = getChartTokens(theme);
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [selectedDatasetId, setSelectedDatasetId] = useState<string>('');
   const [experiments, setExperiments] = useState<Experiment[]>([]);
@@ -90,9 +94,9 @@ export const ModelLabView: React.FC<ModelLabViewProps> = ({ activeDataset }) => 
       backgroundColor: 'transparent',
       tooltip: {
         trigger: 'axis',
-        backgroundColor: '#0C0B0A',
-        borderColor: 'rgba(255, 255, 255, 0.08)',
-        textStyle: { color: '#F2EFEB', fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        backgroundColor: ct.tooltipBg,
+        borderColor: ct.tooltipBorder,
+        textStyle: { color: ct.tooltipText, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
         formatter: (params: any) => {
           const pt = params[0].value;
           return `FPR: ${pt[0]}<br/>TPR: ${pt[1]}`;
@@ -102,22 +106,22 @@ export const ModelLabView: React.FC<ModelLabViewProps> = ({ activeDataset }) => 
       xAxis: {
         type: 'value',
         name: 'False Positive Rate',
-        nameTextStyle: { color: '#807A70', fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        nameTextStyle: { color: ct.nameText, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
         min: 0,
         max: 1,
-        axisLine: { lineStyle: { color: '#262420' } },
-        splitLine: { lineStyle: { color: '#161513' } },
-        axisLabel: { color: '#807A70', fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        axisLine: { lineStyle: { color: ct.axisLine } },
+        splitLine: { lineStyle: { color: ct.splitLine } },
+        axisLabel: { color: ct.axisLabel, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
       },
       yAxis: {
         type: 'value',
         name: 'True Positive Rate',
-        nameTextStyle: { color: '#807A70', fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        nameTextStyle: { color: ct.nameText, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
         min: 0,
         max: 1,
-        axisLine: { lineStyle: { color: '#262420' } },
-        splitLine: { lineStyle: { color: '#161513' } },
-        axisLabel: { color: '#807A70', fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        axisLine: { lineStyle: { color: ct.axisLine } },
+        splitLine: { lineStyle: { color: ct.splitLine } },
+        axisLabel: { color: ct.axisLabel, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
       },
       series: [
         {
@@ -125,9 +129,9 @@ export const ModelLabView: React.FC<ModelLabViewProps> = ({ activeDataset }) => 
           type: 'line',
           data: pts,
           smooth: true,
-          itemStyle: { color: '#B0906C' },
+          itemStyle: { color: ct.accent },
           lineStyle: { width: 1.5 },
-          areaStyle: { color: 'rgba(176, 144, 108, 0.08)' },
+          areaStyle: { color: ct.accent, opacity: 0.12 },
         },
       ],
     };
@@ -403,7 +407,7 @@ export const ModelLabView: React.FC<ModelLabViewProps> = ({ activeDataset }) => 
                     </span>
                   </div>
                   <div className="h-48 w-full">
-                    <ReactECharts option={getRocOption()} style={{ height: '100%', width: '100%' }} />
+                    <ReactECharts option={getRocOption()} notMerge={true} style={{ height: '100%', width: '100%' }} />
                   </div>
                 </div>
               </div>

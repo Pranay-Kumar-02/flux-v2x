@@ -27,7 +27,7 @@ class SplitEngine:
         }
 
         if strategy == "scenario_split" and "scenario" in df.columns:
-            unique_scenarios = df["scenario"].unique().to_list()
+            unique_scenarios = sorted(df["scenario"].unique().to_list())
             if len(unique_scenarios) >= 2:
                 # Group-aware split by scenario
                 np.random.seed(random_seed)

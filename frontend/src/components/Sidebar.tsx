@@ -49,7 +49,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate }) => 
       {/* Brand Header */}
       <div className="h-14 px-4 flex items-center justify-between border-b border-flux-border/40">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-gradient-to-b from-flux-surface to-flux-subsurface border border-white/[0.06] text-flux-accent shadow-sm">
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-gradient-to-b from-flux-surface to-flux-subsurface border border-flux-border text-flux-accent shadow-sm">
             <Layers size={15} />
           </div>
           <div>
