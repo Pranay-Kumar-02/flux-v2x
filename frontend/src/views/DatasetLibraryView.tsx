@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   Upload,
   Database,
-  Table,
   FileCheck,
   AlertTriangle,
   Trash2,

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ReactECharts from 'echarts-for-react';
-import { Compass, Sparkles, Layers } from 'lucide-react';
+import { Compass, Layers } from 'lucide-react';
 import { api, Dataset } from '../api/client';
 
 interface ContextExplorerViewProps {

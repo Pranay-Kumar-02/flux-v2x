@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, CheckCircle2, Ban, ShieldAlert, Sparkles } from 'lucide-react';
+import { Play, CheckCircle2, Ban, ShieldAlert } from 'lucide-react';
 import { api, Dataset, ACAFDMConfig, ACAFDMRunResult } from '../api/client';
 
 interface AcafdmViewProps {
@@ -82,6 +82,30 @@ export const AcafdmView: React.FC<AcafdmViewProps> = ({ activeDataset }) => {
         </div>
 
         <div className="flex items-center gap-3">
+          {configs.length > 0 && (
+            <select
+              value={selectedConfigId}
+              onChange={(e) => {
+                const id = e.target.value;
+                setSelectedConfigId(id);
+                const c = configs.find((cfg) => cfg.id === id);
+                if (c) {
+                  setClusterCount(c.cluster_count);
+                  setAlphaRate(c.alpha_update_rate);
+                  setZThreshold(c.z_threshold);
+                  setPersistenceK(c.persistence_k);
+                  setPoisonGate(c.benign_validation_gate);
+                }
+              }}
+              className="bg-flux-surface border border-white/[0.06] rounded-md px-3 py-1.5 text-xs text-flux-text focus:outline-none focus:border-flux-accent font-medium shadow-sm"
+            >
+              {configs.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          )}
           <select
             value={selectedDatasetId}
             onChange={(e) => setSelectedDatasetId(e.target.value)}
@@ -109,7 +133,7 @@ export const AcafdmView: React.FC<AcafdmViewProps> = ({ activeDataset }) => {
           </div>
           <span className="text-xs text-flux-sage flex items-center gap-1.5 font-medium">
             <span className="w-1.5 h-1.5 rounded-full bg-flux-sage" />
-            Poison Gate Active
+            {poisonGate ? 'Poison Gate Active' : 'Poison Gate Inactive'}
           </span>
         </div>
 

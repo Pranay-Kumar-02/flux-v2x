@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ReactECharts from 'echarts-for-react';
-import { Play, RotateCcw, Cpu, Sparkles, Activity } from 'lucide-react';
+import { Play, RotateCcw, Cpu } from 'lucide-react';
 import { api, Dataset, Experiment } from '../api/client';
 
 interface ModelLabViewProps {
@@ -148,6 +148,20 @@ export const ModelLabView: React.FC<ModelLabViewProps> = ({ activeDataset }) => 
           <p className="text-xs text-flux-secondary mt-1 max-w-xl leading-relaxed">
             Train and evaluate 10 classical and contextual classifiers under disjoint scenario partitions to verify performance gains without data leakage.
           </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <select
+            value={selectedDatasetId}
+            onChange={(e) => setSelectedDatasetId(e.target.value)}
+            className="bg-flux-surface border border-white/[0.06] rounded-md px-3 py-1.5 text-xs text-flux-text focus:outline-none focus:border-flux-accent font-medium shadow-sm"
+          >
+            {datasets.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.name}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 

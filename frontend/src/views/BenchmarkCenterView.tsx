@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Scale, AlertCircle, BarChart3, Sparkles } from 'lucide-react';
+import { Scale, AlertCircle, BarChart3 } from 'lucide-react';
 import { api, Experiment, PairedMcNemarResult } from '../api/client';
 
 export const BenchmarkCenterView: React.FC = () => {

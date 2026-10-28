@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Flame, ShieldAlert, Sparkles } from 'lucide-react';
+import { Play, Flame, ShieldAlert } from 'lucide-react';
 import { api, Dataset, MitigationSimulation } from '../api/client';
 
 interface MitigationSimulatorViewProps {
@@ -80,6 +80,22 @@ export const MitigationSimulatorView: React.FC<MitigationSimulatorViewProps> = (
         </div>
 
         <div className="flex items-center gap-3">
+          {simulations.length > 0 && (
+            <select
+              value={selectedSim?.id || ''}
+              onChange={(e) => {
+                const s = simulations.find((sim) => sim.id === e.target.value);
+                if (s) setSelectedSim(s);
+              }}
+              className="bg-flux-surface border border-white/[0.06] rounded-md px-3 py-1.5 text-xs text-flux-text focus:outline-none focus:border-flux-accent font-medium shadow-sm"
+            >
+              {simulations.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          )}
           <select
             value={selectedDatasetId}
             onChange={(e) => setSelectedDatasetId(e.target.value)}

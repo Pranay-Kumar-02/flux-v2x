@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Copy, CheckCircle2, Terminal, FileSearch, Sparkles } from 'lucide-react';
+import { Copy, CheckCircle2, Terminal, FileSearch } from 'lucide-react';
 import { api, Experiment } from '../api/client';
 
 export const ExperimentInspectorView: React.FC = () => {

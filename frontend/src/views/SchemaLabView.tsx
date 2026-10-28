@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, CheckCircle2, Save, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Save, SlidersHorizontal } from 'lucide-react';
 import { api, Dataset } from '../api/client';
 
 interface SchemaLabViewProps {

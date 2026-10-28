@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, CheckCircle2, Activity, Server, Database, HardDrive, Sparkles } from 'lucide-react';
+import { RefreshCw, CheckCircle2, Activity, Server, Database, HardDrive } from 'lucide-react';
 import { api, SystemStats } from '../api/client';
 
 export const AuditView: React.FC = () => {
