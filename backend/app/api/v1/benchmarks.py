@@ -1,6 +1,5 @@
 import os
 import logging
-from typing import List, Dict, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 import polars as pl

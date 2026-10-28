@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from sklearn.ensemble import (
     GradientBoostingClassifier,
     RandomForestClassifier,

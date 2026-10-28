@@ -10,7 +10,7 @@ from app.core.security import create_access_token
 from app.db.base import Base
 from app.db.session import engine, SessionLocal
 from app.db.init_db import provision_synthetic_fixture
-from app.models.entities import User, WorkspaceMembership, Dataset, DatasetVersion, BackgroundJob
+from app.models.entities import User, BackgroundJob
 from app.workers.task_runner import TaskRunner
 from app.ingestion.mendeley_downloader import MendeleyDatasetImporter
 

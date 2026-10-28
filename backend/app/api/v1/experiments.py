@@ -96,7 +96,7 @@ def _run_experiment_async(
             test_df = baseline_engine.transform(test_df, cluster_col=cluster_col)
 
         if cancel_event.is_set():
-            return
+            return None
 
         # Feature selection with strict target leakage exclusion
         target_name = exp.target_column.strip().lower()
@@ -120,7 +120,7 @@ def _run_experiment_async(
 
         TaskRunner.update_progress(job_id, 65, {"stage": "model_fitting", "features_count": len(features)})
         if cancel_event.is_set():
-            return
+            return None
 
         # Model creation & training
         model = ModelFactory.create_model(
