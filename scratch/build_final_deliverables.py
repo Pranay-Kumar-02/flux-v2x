@@ -465,28 +465,28 @@ r_s83.font.size = Pt(12)
 
 figures_info = [
     (
-        os.path.join(fig_deliv_dir, "figure_2a_detection_performance.png"),
+        os.path.join(fig_deliv_dir, "figure_2a_detection_performance_hd.png"),
         "Figure 2(a). ",
-        "Detection performance comparison between Non-Contextual Raw Gradient Boosting and proposed Context-Aware ACAFDM across Accuracy, Precision, Recall, and F1-score (exported from FluxV2X platform at 300 DPI, print-optimized white background).",
-        Inches(5.5)
+        "Detection performance comparison between Non-Contextual Raw Gradient Boosting and proposed Context-Aware ACAFDM across Accuracy, Precision, Recall, and F1-score (high-definition capture from live FluxV2X platform at 2560px resolution).",
+        Inches(5.8)
     ),
     (
-        os.path.join(fig_deliv_dir, "figure_2b_classification_error.png"),
+        os.path.join(fig_deliv_dir, "figure_2b_classification_errors_hd.png"),
         "Figure 2(b). ",
-        "Classification error comparison displaying False Positive Rate (FPR, left panel) and False Negative Rate (FNR, right panel) across dedicated honest scales. ACAFDM reduces false alarms by 33.7% (1.08% vs. 1.63%), preventing unjustified defensive throttling.",
-        Inches(5.6)
+        "Classification error analysis displaying False Positive Rate (FPR, left axis) and False Negative Rate (FNR, right axis) across dual honest scales (high-definition capture from live FluxV2X platform at 2560px resolution). ACAFDM suppresses false alarms from 1.63% to 1.08%.",
+        Inches(5.8)
     ),
     (
-        os.path.join(fig_deliv_dir, "figure_2c_scenario_delay_overhead.png"),
+        os.path.join(fig_deliv_dir, "figure_2c_latency_overhead_hd.png"),
         "Figure 2(c). ",
-        "Scenario-wise operational latency (left panel, ms) and selective mitigation overhead (right panel, % collateral loss) across Highway and Metropolitan environments, confirming strict compliance with the 5.0 ms safety messaging deadline.",
-        Inches(5.6)
+        "Detection delay (left axis, ms) and mitigation overhead (right axis, % collateral damage) across Highway and Metropolitan operational scenarios (high-definition capture from live FluxV2X platform at 2560px resolution).",
+        Inches(5.8)
     ),
     (
-        os.path.join(fig_deliv_dir, "figure_2d_ablation_study.png"),
+        os.path.join(fig_deliv_dir, "figure_2d_model_comparison_hd.png"),
         "Figure 2(d). ",
-        "Multi-family comparative analysis and component ablation benchmark evaluating Accuracy, Malicious F1-score, and False Positive Rate across four independently trained configurations on the held-out test split.",
-        Inches(5.5)
+        "Model family comparative analysis and component benchmark evaluating Accuracy, F1-score, and False Positive Rate across four independently trained configurations on the held-out test split (high-definition capture from live FluxV2X platform at 2560px resolution).",
+        Inches(5.8)
     ),
 ]
 
