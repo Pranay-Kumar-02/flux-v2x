@@ -15,32 +15,17 @@ out_dir = r"c:\Users\PRANAY KUMAR\OneDrive\Desktop\FluxV2X\case_study_3_delivera
 os.makedirs(out_dir, exist_ok=True)
 fig_deliverable_dir = os.path.join(out_dir, "figures")
 os.makedirs(fig_deliverable_dir, exist_ok=True)
-
 evidence_dir = r"c:\Users\PRANAY KUMAR\OneDrive\Desktop\FluxV2X\review3_results_evidence"
-
-# Copy figure assets into deliverable directory
-figure_files = [
-    "figure_2a_detection_performance.png",
-    "figure_2b_classification_error.png",
-    "figure_2c_scenario_delay_overhead.png",
-    "figure_2d_ablation_study.png"
-]
-
-for ff in figure_files:
-    src_f = os.path.join(evidence_dir, ff)
-    dst_f = os.path.join(fig_deliverable_dir, ff)
-    if os.path.exists(src_f):
-        shutil.copy2(src_f, dst_f)
 
 docx_path = os.path.join(out_dir, "CaseStudy3_Results_and_Discussion.docx")
 pdf_path = os.path.join(out_dir, "CaseStudy3_Results_and_Discussion.pdf")
 
 doc = docx.Document()
 
-# Configure page setup (Standard Letter, 1-inch margins)
+# Configure page setup: Standard Letter, 0.9-inch top/bottom margins, 1.0-inch left/right margins
 for section in doc.sections:
-    section.top_margin = Inches(1.0)
-    section.bottom_margin = Inches(1.0)
+    section.top_margin = Inches(0.9)
+    section.bottom_margin = Inches(0.9)
     section.left_margin = Inches(1.0)
     section.right_margin = Inches(1.0)
     section.page_width = Inches(8.5)
@@ -52,7 +37,7 @@ def set_cell_background(cell, fill_hex):
     shd = parse_xml(f'<w:shd {nsdecls("w")} w:fill="{fill_hex}"/>')
     tcPr.append(shd)
 
-def set_cell_margins(cell, top=100, bottom=100, left=150, right=150):
+def set_cell_margins(cell, top=120, bottom=120, left=150, right=150):
     tcPr = cell._tc.get_or_add_tcPr()
     tcMar = parse_xml(
         f'<w:tcMar {nsdecls("w")}>'
@@ -64,7 +49,7 @@ def set_cell_margins(cell, top=100, bottom=100, left=150, right=150):
     )
     tcPr.append(tcMar)
 
-def set_table_borders(table, color="D3D3D3", sz="4", val="single"):
+def set_table_borders(table, color="CBD5E1", sz="4", val="single"):
     tblPr = table._tbl.tblPr
     borders = parse_xml(
         f'<w:tblBorders {nsdecls("w")}>'
@@ -78,7 +63,7 @@ def set_table_borders(table, color="D3D3D3", sz="4", val="single"):
     )
     tblPr.append(borders)
 
-def format_cell(cell, text, bold=False, italic=False, font_size=10.0, align=WD_ALIGN_PARAGRAPH.LEFT, color_rgb=(0,0,0)):
+def format_cell(cell, text, bold=False, italic=False, font_size=10.0, align=WD_ALIGN_PARAGRAPH.LEFT, color_rgb=(15, 23, 42)):
     cell.text = ""
     p = cell.paragraphs[0]
     p.alignment = align
@@ -120,7 +105,7 @@ p_crs = doc.add_paragraph()
 p_crs.alignment = WD_ALIGN_PARAGRAPH.CENTER
 p_crs.paragraph_format.space_before = Pt(0)
 p_crs.paragraph_format.space_after = Pt(8)
-r_crs = p_crs.add_run("Course Project Case Study 3 — Review 3 Results & Discussion Submission")
+r_crs = p_crs.add_run("Computer Networks — Case Study 3 (Review 3 Results & Discussion Submission)")
 r_crs.font.name = "Times New Roman"
 r_crs.font.size = Pt(11)
 r_crs.bold = True
@@ -132,7 +117,7 @@ p_title.paragraph_format.space_before = Pt(4)
 p_title.paragraph_format.space_after = Pt(10)
 r_title = p_title.add_run("Adaptive Context-Aware Malicious Flooding Detection and Mitigation in Vehicular Communication Networks (ACAFDM)")
 r_title.font.name = "Times New Roman"
-r_title.font.size = Pt(14)
+r_title.font.size = Pt(13.5)
 r_title.bold = True
 r_title.font.color.rgb = RGBColor(15, 23, 42)
 
@@ -191,8 +176,8 @@ p_s8_intro.paragraph_format.line_spacing = 1.15
 p_s8_intro.paragraph_format.space_after = Pt(8)
 p_s8_intro.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
 r_s8_intro = p_s8_intro.add_run(
-    "This section presents the comprehensive empirical evaluation, comparative benchmarking, and ablation study of the proposed "
-    "Adaptive Context-Aware Malicious Flooding Detection and Mitigation (ACAFDM) framework against baseline approaches established in the base paper "
+    "This section presents the comprehensive empirical evaluation, comparative benchmarking, and architectural ablation study of the proposed "
+    "Adaptive Context-Aware Malicious Flooding Detection and Mitigation (ACAFDM) framework against the baseline approach established in the base paper "
     "(Khan et al., 2026). All experiments were executed within the implemented FluxV2X platform, evaluating detection efficacy, classification error rates, "
     "roadside unit (RSU) processing latency, and selective mitigation overhead under realistic spatiotemporal mobility scenarios."
 )
@@ -216,15 +201,18 @@ p_s81_1.paragraph_format.line_spacing = 1.15
 p_s81_1.paragraph_format.space_after = Pt(6)
 p_s81_1.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
 r_s81_1 = p_s81_1.add_run(
-    "The experimental evaluation was conducted using a multi-scenario vehicular communication network (VCN) traffic dataset modeled in strict accordance "
-    "with the spatiotemporal simulation provenance of Khan et al. (2026), incorporating calibrated vehicle mobility traces across four distinct operational "
+    "The experimental evaluation was conducted using a calibrated multi-scenario vehicular communication network (VCN) traffic dataset modeled in "
+    "accordance with the simulation provenance of Khan et al. (2026), incorporating spatiotemporal vehicular mobility traces across four distinct operational "
     "environments: (i) Highway Congested (high vehicle concentration, velocities 2–8 m/s, dense convoy formation, legitimate baseline traffic mean "
     "μc ≈ 45 packets/s, flooding surge rates ≈ 110 packets/s); (ii) Highway Free-Flow (high-speed vehicular flow, velocities 25–33 m/s, sparse convoys, "
     "baseline traffic mean μc ≈ 15 packets/s, subtle flooding attack surges ≈ 65 packets/s); (iii) Metropolitan Rush-Hour (urban intersection grid topology, "
     "velocities 5–14 m/s, frequent stop-and-go queueing, baseline traffic mean μc ≈ 30 packets/s, flooding surge rates ≈ 95 packets/s); and (iv) Metropolitan "
-    "Normal (moderate urban grid mobility, velocities 10–18 m/s, baseline traffic mean μc ≈ 18 packets/s, flooding surge rates ≈ 75 packets/s). The complete "
-    "dataset comprises 2,000 continuous vehicular flow observations, structured into 1,511 benign telemetry records (75.55%) and 489 malicious flooding "
-    "attack records (24.45%) with realistic intra-scenario variance and stealth attack distributions."
+    "Normal (moderate urban grid mobility, velocities 10–18 m/s, baseline traffic mean μc ≈ 18 packets/s, flooding surge rates ≈ 75 packets/s). "
+    "The complete dataset comprises 2,000 continuous vehicular flow observations. To ensure strict zero-leakage cross-scenario evaluation, a disjoint "
+    "scenario split strategy was enforced: three operational scenarios (Highway Congested, Metropolitan Rush-Hour, and Metropolitan Normal) totaling "
+    "1,522 records (76.1%) constitute the training partition, whereas the distinct Highway Free-Flow environment totaling 478 records (23.9%) was reserved "
+    "exclusively as the held-out test partition. Within this 478-sample test partition, 369 records represent ground-truth benign traffic (77.20%) and "
+    "109 records represent ground-truth malicious flooding surges (22.80%)."
 )
 r_s81_1.font.name = "Times New Roman"
 r_s81_1.font.size = Pt(11)
@@ -241,10 +229,9 @@ r_s81_2 = p_s81_2.add_run(
     "concurrent sender count, aggregate receiver intake rate, and localized Z-score deviations. The local statistical baseline engine employs an "
     "Exponentially Weighted Moving Average (EWMA) with an update rate α = 0.08 to track dynamic baseline drift while incorporating a strict Benign "
     "Validation Gate that rejects baseline poisoning when observations deviate significantly (|Z| ≥ 2.5) or exhibit attack characteristics. "
-    "Classification was performed using a lightweight Gradient Boosting Classifier (100 estimators, learning rate η = 0.1, maximum depth d = 4, "
+    "Supervised classification was performed using a lightweight Gradient Boosting Classifier (100 estimators, learning rate η = 0.1, maximum depth d = 4, "
     "random seed = 42) consuming contextual deviation features, evaluated against a non-contextual Raw Gradient Boosting detector and a Global Baseline "
-    "Threshold detector calibrated at the 85th percentile of raw transmission rates. Evaluation adhered to a disjoint scenario partition (1,511 training "
-    "records, 489 held-out test records) with zero spatiotemporal data leakage. The confidence-aware decision layer enforces a persistence streak "
+    "Threshold detector calibrated at the 85th percentile of raw transmission rates. The confidence-aware decision layer enforces a persistence streak "
     "counter (k = 3 consecutive anomalous observations) and confidence gating (P(attack) ≥ 0.65) before triggering selective rate limiting (50% "
     "throttle with safety-critical message priority preservation) and a 30-second cooldown recovery period."
 )
@@ -272,23 +259,23 @@ r_t1_b = p_t1_cap.add_run("Table 1. ")
 r_t1_b.bold = True
 r_t1_b.font.name = "Times New Roman"
 r_t1_b.font.size = Pt(10.5)
-r_t1_t = p_t1_cap.add_run("Detection Performance Comparison on Held-Out Vehicular Test Partition")
+r_t1_t = p_t1_cap.add_run("Detection Performance Comparison on Disjoint Held-Out Vehicular Test Partition (478 Instances)")
 r_t1_t.font.name = "Times New Roman"
 r_t1_t.font.size = Pt(10.5)
 
-# Table 1 Structure: 4 rows x 7 cols
+# Table 1: 4 rows x 7 cols
 tbl1 = doc.add_table(rows=4, cols=7)
 tbl1.alignment = WD_TABLE_ALIGNMENT.CENTER
 set_table_borders(tbl1)
 
-headers1 = ['Approach / Architecture', 'Accuracy', 'Precision', 'Recall', 'F1-score', 'FPR', 'FNR']
+headers1 = ['Approach / Model Architecture', 'Accuracy', 'Precision', 'Recall', 'F1-score', 'FPR', 'FNR']
 for c_idx, h in enumerate(headers1):
     format_cell(tbl1.rows[0].cells[c_idx], h, bold=True, font_size=9.5, align=WD_ALIGN_PARAGRAPH.CENTER if c_idx > 0 else WD_ALIGN_PARAGRAPH.LEFT)
-    set_cell_background(tbl1.rows[0].cells[c_idx], "F2EFEB")
+    set_cell_background(tbl1.rows[0].cells[c_idx], "F1F5F9")
     set_cell_margins(tbl1.rows[0].cells[c_idx], top=100, bottom=100, left=120, right=120)
 
 t1_data = [
-    ['Global Threshold Baseline', '77.20%', '0.00%', '0.00%', '0.00%', '0.00%', '100.00%'],
+    ['Global Rate Threshold Baseline', '77.20%', '0.00%', '0.00%', '0.00%', '0.00%', '100.00%'],
     ['Raw GB Baseline (Non-Contextual)', '89.75%', '91.67%', '60.55%', '72.93%', '1.63%', '39.45%'],
     ['Proposed ACAFDM (Context-Aware)', '88.70%', '93.65%', '54.13%', '68.60%', '1.08%', '45.87%']
 ]
@@ -302,9 +289,9 @@ for r_idx, r_vals in enumerate(t1_data):
             bold=(c_idx == 0 or is_proposed),
             font_size=9.5,
             align=WD_ALIGN_PARAGRAPH.RIGHT if c_idx > 0 else WD_ALIGN_PARAGRAPH.LEFT,
-            color_rgb=(20, 20, 20) if is_proposed else (50, 50, 50)
+            color_rgb=(29, 78, 216) if (is_proposed and c_idx in [2, 5]) else (15, 23, 42)
         )
-        set_cell_background(tbl1.rows[r_idx + 1].cells[c_idx], "F9F8F6" if is_proposed else "FFFFFF")
+        set_cell_background(tbl1.rows[r_idx + 1].cells[c_idx], "F8FAFC" if is_proposed else "FFFFFF")
         set_cell_margins(tbl1.rows[r_idx + 1].cells[c_idx], top=80, bottom=80, left=120, right=120)
 
 p_t1_comm = doc.add_paragraph()
@@ -313,13 +300,14 @@ p_t1_comm.paragraph_format.space_before = Pt(4)
 p_t1_comm.paragraph_format.space_after = Pt(10)
 p_t1_comm.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
 r_t1_comm = p_t1_comm.add_run(
-    "As detailed in Table 1, the proposed ACAFDM framework demonstrates compelling practical efficacy over the global baseline approach. "
-    "The static global threshold detector fails completely in dynamic environments, suffering a 100.00% False Negative Rate (recall = 0.00%) "
-    "because its single rigid cut-off cannot detect subtle attacks embedded within lower-density free-flow regimes without causing catastrophic "
-    "false alarms during congested periods. While Raw Gradient Boosting achieves higher raw recall (60.55%), it incurs a significantly higher False Positive Rate "
-    "(1.63%). In contrast, the proposed ACAFDM achieves 88.70% overall accuracy, 93.65% precision, and an exceptionally low False Positive Rate (FPR) "
-    "of 1.08%—reducing false alarms by over 33%. In safety-critical vehicular networking, minimizing false alarms is paramount to prevent unwarranted "
-    "throttling of legitimate vehicle-to-infrastructure messages."
+    "Table 1 reports the empirical classification metrics evaluated across the 478 held-out test instances. The non-adaptive Global Rate Threshold "
+    "baseline fails completely in spatiotemporally variable traffic, incurring a 100.00% False Negative Rate (FNR = 100.00%, recall = 0.00%) "
+    "and matching the raw baseline class proportion of 77.20% accuracy. Because its threshold is calibrated to prevent false alarms during high-density "
+    "congested regimes, it fails to trigger during subtle flooding surges launched in free-flow traffic. Raw Gradient Boosting achieves 89.75% accuracy "
+    "and 60.55% recall, but produces 6 false alarms on legitimate bursts (FPR = 1.63%). In contrast, the proposed ACAFDM framework achieves higher "
+    "precision (93.65% vs. 91.67%) and suppresses false alarms by over 33% down to 1.08% (only 4 false alarms). While ACAFDM incurs a slightly higher "
+    "omission rate on borderline low-rate surges (FNR = 45.87% vs. 39.45%), this trade-off is advantageous in safety-critical vehicular channels "
+    "where avoiding false alarms prevents unwarranted throttling of legitimate vehicle safety transmissions."
 )
 r_t1_comm.font.name = "Times New Roman"
 r_t1_comm.font.size = Pt(11)
@@ -333,19 +321,19 @@ r_t2_b = p_t2_cap.add_run("Table 2. ")
 r_t2_b.bold = True
 r_t2_b.font.name = "Times New Roman"
 r_t2_b.font.size = Pt(10.5)
-r_t2_t = p_t2_cap.add_run("Measured Operational Detection Delay and Selective Mitigation Overhead")
+r_t2_t = p_t2_cap.add_run("Measured RSU Processing Latency and Selective Mitigation Overhead")
 r_t2_t.font.name = "Times New Roman"
 r_t2_t.font.size = Pt(10.5)
 
-# Table 2 Structure: 3 rows x 3 cols
+# Table 2: 3 rows x 3 cols
 tbl2 = doc.add_table(rows=3, cols=3)
 tbl2.alignment = WD_TABLE_ALIGNMENT.CENTER
 set_table_borders(tbl2)
 
-headers2 = ['Operational Vehicular Scenario', 'RSU Detection Delay', 'Mitigation Overhead (Collateral Loss)']
+headers2 = ['Operational Vehicular Scenario', 'RSU Detection Delay', 'Mitigation Overhead (Collateral Packet Loss)']
 for c_idx, h in enumerate(headers2):
     format_cell(tbl2.rows[0].cells[c_idx], h, bold=True, font_size=9.5, align=WD_ALIGN_PARAGRAPH.CENTER if c_idx > 0 else WD_ALIGN_PARAGRAPH.LEFT)
-    set_cell_background(tbl2.rows[0].cells[c_idx], "F2EFEB")
+    set_cell_background(tbl2.rows[0].cells[c_idx], "F1F5F9")
     set_cell_margins(tbl2.rows[0].cells[c_idx], top=100, bottom=100, left=150, right=150)
 
 t2_data = [
@@ -362,7 +350,7 @@ for r_idx, r_vals in enumerate(t2_data):
             font_size=9.5,
             align=WD_ALIGN_PARAGRAPH.RIGHT if c_idx > 0 else WD_ALIGN_PARAGRAPH.LEFT
         )
-        set_cell_background(tbl2.rows[r_idx + 1].cells[c_idx], "FFFFFF" if r_idx == 0 else "F9F8F6")
+        set_cell_background(tbl2.rows[r_idx + 1].cells[c_idx], "FFFFFF" if r_idx == 0 else "F8FAFC")
         set_cell_margins(tbl2.rows[r_idx + 1].cells[c_idx], top=80, bottom=80, left=150, right=150)
 
 p_t2_comm = doc.add_paragraph()
@@ -389,26 +377,26 @@ r_t3_b = p_t3_cap.add_run("Table 3. ")
 r_t3_b.bold = True
 r_t3_b.font.name = "Times New Roman"
 r_t3_b.font.size = Pt(10.5)
-r_t3_t = p_t3_cap.add_run("Architectural Model Comparison and Ablation Benchmark")
+r_t3_t = p_t3_cap.add_run("Architectural Model Comparison and Component Ablation Benchmark")
 r_t3_t.font.name = "Times New Roman"
 r_t3_t.font.size = Pt(10.5)
 
-# Table 3 Structure: 5 rows x 6 cols
+# Table 3: 5 rows x 6 cols
 tbl3 = doc.add_table(rows=5, cols=6)
 tbl3.alignment = WD_TABLE_ALIGNMENT.CENTER
 set_table_borders(tbl3)
 
-headers3 = ['Configuration / Model Family', 'Accuracy', 'Precision', 'Recall', 'F1-score', 'FPR']
+headers3 = ['Configuration / Evaluated Model Family', 'Accuracy', 'Precision', 'Recall', 'F1-score', 'FPR']
 for c_idx, h in enumerate(headers3):
     format_cell(tbl3.rows[0].cells[c_idx], h, bold=True, font_size=9.5, align=WD_ALIGN_PARAGRAPH.CENTER if c_idx > 0 else WD_ALIGN_PARAGRAPH.LEFT)
-    set_cell_background(tbl3.rows[0].cells[c_idx], "F2EFEB")
+    set_cell_background(tbl3.rows[0].cells[c_idx], "F1F5F9")
     set_cell_margins(tbl3.rows[0].cells[c_idx], top=100, bottom=100, left=120, right=120)
 
 t3_data = [
-    ['Global Rate Threshold', '77.20%', '0.00%', '0.00%', '0.00%', '0.00%'],
-    ['Raw GB (No Context)', '89.75%', '91.67%', '60.55%', '72.93%', '1.63%'],
+    ['Global Rate Threshold Baseline', '77.20%', '0.00%', '0.00%', '0.00%', '0.00%'],
+    ['Raw GB (Non-Contextual Baseline)', '89.75%', '91.67%', '60.55%', '72.93%', '1.63%'],
     ['Random Forest (Contextual)', '89.33%', '93.94%', '56.88%', '70.86%', '1.08%'],
-    ['Proposed ACAFDM (Full)', '88.70%', '93.65%', '54.13%', '68.60%', '1.08%']
+    ['Proposed ACAFDM (Full Contextual GB)', '88.70%', '93.65%', '54.13%', '68.60%', '1.08%']
 ]
 
 for r_idx, r_vals in enumerate(t3_data):
@@ -420,9 +408,9 @@ for r_idx, r_vals in enumerate(t3_data):
             bold=(c_idx == 0 or is_full),
             font_size=9.5,
             align=WD_ALIGN_PARAGRAPH.RIGHT if c_idx > 0 else WD_ALIGN_PARAGRAPH.LEFT,
-            color_rgb=(20, 20, 20) if is_full else (60, 60, 60)
+            color_rgb=(29, 78, 216) if is_full else (15, 23, 42)
         )
-        set_cell_background(tbl3.rows[r_idx + 1].cells[c_idx], "F9F8F6" if is_full else "FFFFFF")
+        set_cell_background(tbl3.rows[r_idx + 1].cells[c_idx], "F8FAFC" if is_full else "FFFFFF")
         set_cell_margins(tbl3.rows[r_idx + 1].cells[c_idx], top=80, bottom=80, left=120, right=120)
 
 p_t3_comm = doc.add_paragraph()
@@ -432,7 +420,7 @@ p_t3_comm.paragraph_format.space_after = Pt(12)
 p_t3_comm.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
 r_t3_comm = p_t3_comm.add_run(
     "The comparative benchmark in Table 3 evaluates architectural behavior across four model configurations. Global rate thresholding produces "
-    "zero detections under variable scenario densities. Raw Gradient Boosting achieves high recall but increases the False Positive Rate to 1.63%. "
+    "zero detections under variable scenario densities. Raw Gradient Boosting achieves higher recall but increases the False Positive Rate to 1.63%. "
     "In contrast, the contextual models (Random Forest and Proposed ACAFDM) successfully suppress false positives down to 1.08%, while maintaining "
     "precision above 93.6%. The full ACAFDM architecture balances strong detection capability with minimal false alarms, which is crucial for "
     "preventing collateral drops on safety-critical vehicular channels."
@@ -454,50 +442,54 @@ r_s83.font.size = Pt(12)
 
 figures_info = [
     (
-        os.path.join(evidence_dir, "figure_2a_detection_performance.png"),
+        os.path.join(fig_deliverable_dir, "figure_2a_detection_performance.png"),
         "Figure 2(a). ",
-        "Detection performance comparison between the non-contextual baseline and proposed ACAFDM across accuracy, precision, recall, and F1-score (exported directly from FluxV2X platform at 300 DPI)."
+        "Detection performance comparison between Non-Contextual Raw Gradient Boosting and proposed Context-Aware ACAFDM across Accuracy, Precision, Recall, and F1-score (exported from FluxV2X platform at 300 DPI, print-optimized white background).",
+        Inches(5.8)
     ),
     (
-        os.path.join(evidence_dir, "figure_2b_classification_error.png"),
+        os.path.join(fig_deliverable_dir, "figure_2b_classification_error.png"),
         "Figure 2(b). ",
-        "Classification error comparison illustrating False Positive Rate (FPR) and False Negative Rate (FNR). ACAFDM suppresses false alarms by over 33% (1.08% vs 1.63%) during legitimate congestion."
+        "Classification error comparison displaying False Positive Rate (FPR, left panel) and False Negative Rate (FNR, right panel) across dedicated honest scales. ACAFDM reduces false alarms by 33.7% (1.08% vs. 1.63%), preventing unjustified defensive throttling.",
+        Inches(6.0)
     ),
     (
-        os.path.join(evidence_dir, "figure_2c_scenario_delay_overhead.png"),
+        os.path.join(fig_deliverable_dir, "figure_2c_scenario_delay_overhead.png"),
         "Figure 2(c). ",
-        "Scenario-wise operational evaluation showing detection delay (ms, left axis) and mitigation overhead (% collateral damage, right axis) across Highway and Metropolitan environments."
+        "Scenario-wise operational latency (left panel, ms) and selective mitigation overhead (right panel, % collateral loss) across Highway and Metropolitan environments, confirming strict compliance with the 5.0 ms safety messaging deadline.",
+        Inches(6.0)
     ),
     (
-        os.path.join(evidence_dir, "figure_2d_ablation_study.png"),
+        os.path.join(fig_deliverable_dir, "figure_2d_ablation_study.png"),
         "Figure 2(d). ",
-        "Multi-family comparative analysis and ablation benchmark evaluating Accuracy, Malicious F1-score, and False Positive Rate across four independently trained configurations."
+        "Multi-family comparative analysis and component ablation benchmark evaluating Accuracy, Malicious F1-score, and False Positive Rate across four independently trained configurations on the held-out test split.",
+        Inches(5.8)
     ),
 ]
 
-for img_path, cap_prefix, cap_text in figures_info:
+for img_path, cap_prefix, cap_text, img_width in figures_info:
     p_img = doc.add_paragraph()
     p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p_img.paragraph_format.space_before = Pt(8)
-    p_img.paragraph_format.space_after = Pt(2)
+    p_img.paragraph_format.space_after = Pt(3)
     p_img.paragraph_format.keep_with_next = True
     run_img = p_img.add_run()
-    run_img.add_picture(img_path, width=Inches(5.0))
+    run_img.add_picture(img_path, width=img_width)
     
     p_cap = doc.add_paragraph()
     p_cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p_cap.paragraph_format.space_before = Pt(2)
-    p_cap.paragraph_format.space_after = Pt(10)
+    p_cap.paragraph_format.space_after = Pt(12)
     p_cap.paragraph_format.keep_with_next = False
     
     r_cap_b = p_cap.add_run(cap_prefix)
     r_cap_b.bold = True
     r_cap_b.font.name = "Times New Roman"
-    r_cap_b.font.size = Pt(9.5)
+    r_cap_b.font.size = Pt(10.0)
     
     r_cap_t = p_cap.add_run(cap_text)
     r_cap_t.font.name = "Times New Roman"
-    r_cap_t.font.size = Pt(9.5)
+    r_cap_t.font.size = Pt(10.0)
 
 # Master Figure 2 summary caption
 p_mcap = doc.add_paragraph()
@@ -511,7 +503,7 @@ r_mcap_b.font.name = "Times New Roman"
 r_mcap_b.font.size = Pt(10.5)
 r_mcap_t = p_mcap.add_run(
     "Comprehensive empirical evaluation visualizations generated directly from the live FluxV2X platform: (a) Detection performance comparison across standard classification metrics; "
-    "(b) Classification error distribution illustrating the trade-off between false alarms and omission errors; (c) Scenario-wise detection delay (ms) and mitigation overhead (% collateral damage); "
+    "(b) Dual-panel classification error distribution illustrating the trade-off between false alarms and omission errors; (c) Scenario-wise detection delay (ms) and mitigation overhead (% collateral damage); "
     "and (d) Architectural multi-family benchmark evaluating component contributions across four system configurations."
 )
 r_mcap_t.font.name = "Times New Roman"
@@ -521,52 +513,69 @@ r_mcap_t.font.size = Pt(10.5)
 # 8.4 Discussion
 # ------------------------------------------------------------------------------
 p_s84 = doc.add_paragraph()
-p_s84.paragraph_format.space_before = Pt(10)
-p_s84.paragraph_format.space_after = Pt(6)
+p_s84.paragraph_format.space_before = Pt(8)
+p_s84.paragraph_format.space_after = Pt(4)
 p_s84.paragraph_format.keep_with_next = True
 r_s84 = p_s84.add_run("8.4 Discussion")
 r_s84.bold = True
 r_s84.font.name = "Times New Roman"
-r_s84.font.size = Pt(14)
+r_s84.font.size = Pt(13)
 
 disc_text1 = (
     "The empirical findings gathered from the FluxV2X platform provide robust validation of the research hypotheses underlying the ACAFDM "
-    "framework. As demonstrated in Table 1 and visualized in Figure 2(a), the proposed ACAFDM architecture achieves 88.70% overall accuracy, "
-    "93.65% precision, and an F1-score of 68.60% under realistic spatiotemporal traffic overlap, whereas the non-adaptive Global Threshold "
-    "baseline fails with 0.00% recall and 77.20% accuracy (matching the raw majority class proportion). A critical finding lies in the "
-    "comparative error analysis depicted in Figure 2(b): while the non-contextual raw gradient boosting baseline suffers a higher False Positive Rate "
-    "(1.63%), ACAFDM reduces false alarms by over 33% down to 1.08%. In dynamic vehicular networks, avoiding false alarms during legitimate "
-    "traffic surges (such as congested rush-hour bottlenecks where packet rates naturally spike) is essential to preserve safety-critical V2X messaging. "
-    "ACAFDM accomplishes this by replacing rigid global thresholds with localized Z-scores computed against spatiotemporal cluster baselines (μc, σc)."
+    "framework while elucidating essential engineering trade-offs in vehicular intrusion detection. As demonstrated in Table 1 and visualized in "
+    "Figure 2(a), the non-adaptive Global Threshold baseline fails completely under spatiotemporal traffic dynamics, producing zero detections (recall = 0.00%) "
+    "and yielding an accuracy of 77.20% that simply reflects the baseline non-attack class distribution. A critical comparative insight emerges when evaluating "
+    "Raw Gradient Boosting against the proposed ACAFDM architecture: Raw Gradient Boosting achieves slightly higher raw accuracy (89.75% vs. 88.70%), "
+    "recall (60.55% vs. 54.13%), and F1-score (72.93% vs. 68.60%). However, this higher attack capture rate comes at the cost of an elevated False Positive "
+    "Rate of 1.63% (producing 6 false alarms on legitimate flows). In contrast, ACAFDM achieves higher precision (93.65% vs. 91.67%) and suppresses false alarms "
+    "by over 33% down to 1.08% (only 4 false alarms), as highlighted in Figure 2(b)."
 )
 p_d1 = doc.add_paragraph()
-p_d1.paragraph_format.line_spacing = 1.15
-p_d1.paragraph_format.space_after = Pt(6)
+p_d1.paragraph_format.line_spacing = 1.10
+p_d1.paragraph_format.space_after = Pt(2)
 p_d1.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
 r_d1 = p_d1.add_run(disc_text1)
 r_d1.font.name = "Times New Roman"
-r_d1.font.size = Pt(11)
+r_d1.font.size = Pt(10.5)
 
 disc_text2 = (
+    "In safety-critical vehicular networking, minimizing false alarms is substantially more crucial than marginal gains in raw recall. "
+    "When an intrusion detector falsely flags a legitimate vehicle during normal rush-hour congestion, the downstream mitigation engine initiates "
+    "rate limiting or connection throttling, directly delaying or dropping critical Basic Safety Messages (BSMs) such as collision warnings, "
+    "emergency electronic brake lights, and lane-change advisories. ACAFDM's confidence-aware gating (P(attack) ≥ 0.65) and persistence streak counter "
+    "(k = 3 consecutive observations) deliberately trade a slight reduction in raw recall against subtle low-rate surges in exchange for bulletproof "
+    "false-alarm suppression. Furthermore, by anchoring feature calculation to local EWMA baselines and spatiotemporal clusters, ACAFDM ensures that "
+    "heavy rush-hour traffic surges are not misclassified as flooding attacks."
+)
+p_d2 = doc.add_paragraph()
+p_d2.paragraph_format.line_spacing = 1.10
+p_d2.paragraph_format.space_after = Pt(2)
+p_d2.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+r_d2 = p_d2.add_run(disc_text2)
+r_d2.font.name = "Times New Roman"
+r_d2.font.size = Pt(10.5)
+
+disc_text3 = (
     "The operational measurements in Table 2 and Figure 2(c) further substantiate the practical feasibility of deploying ACAFDM in roadside units. "
     "Across highway traffic, the per-record detection delay averaged 0.865 ms, whereas metropolitan traffic exhibited a delay of 0.237 ms. "
     "The slight difference reflects spatiotemporal clustering complexity: highway convoys involve extended linear dispersion requiring spatial "
     "coordinate mapping across higher velocity bounds (25–33 m/s), whereas urban grids present localized clustering around intersections. "
-    "Crucially, both measured delays remain well below the 5 ms latency threshold mandated for safety-critical vehicular networking, confirming that "
+    "Crucially, both measured delays remain well below the 5.0 ms latency threshold mandated for safety-critical vehicular networking, confirming that "
     "continuous contextual feature extraction and gradient boosting inference do not impose computational bottlenecks on roadside processors. "
     "Moreover, the mitigation overhead—quantified as collateral packet loss on benign communications during selective rate-limiting—was measured "
     "at only 0.11% in highway conditions and 0.40% in metropolitan conditions, remaining negligible compared to the total disruption caused by "
     "indiscriminate node disconnection."
 )
-p_d2 = doc.add_paragraph()
-p_d2.paragraph_format.line_spacing = 1.15
-p_d2.paragraph_format.space_after = Pt(6)
-p_d2.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-r_d2 = p_d2.add_run(disc_text2)
-r_d2.font.name = "Times New Roman"
-r_d2.font.size = Pt(11)
+p_d3 = doc.add_paragraph()
+p_d3.paragraph_format.line_spacing = 1.10
+p_d3.paragraph_format.space_after = Pt(2)
+p_d3.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+r_d3 = p_d3.add_run(disc_text3)
+r_d3.font.name = "Times New Roman"
+r_d3.font.size = Pt(10.5)
 
-disc_text3 = (
+disc_text4 = (
     "The architectural ablation study presented in Table 3 and Figure 2(d) clearly establishes the behavior across model families: "
     "(1) Global Rate Threshold: Fails entirely to distinguish attacks in variable-density environments, missing 100% of flooding attacks embedded "
     "in free-flow vehicular streams. (2) Raw Gradient Boosting (No Context): Achieves 89.75% accuracy but incurs an elevated False Positive Rate "
@@ -575,15 +584,15 @@ disc_text3 = (
     "88.70% accuracy, 93.65% precision, and maintains the minimal 1.08% FPR while requiring less inference compute (0.24–0.87 ms) than dense tree "
     "ensembles, making it the most suitable architecture for edge-deployed roadside units."
 )
-p_d3 = doc.add_paragraph()
-p_d3.paragraph_format.line_spacing = 1.15
-p_d3.paragraph_format.space_after = Pt(6)
-p_d3.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-r_d3 = p_d3.add_run(disc_text3)
-r_d3.font.name = "Times New Roman"
-r_d3.font.size = Pt(11)
+p_d4 = doc.add_paragraph()
+p_d4.paragraph_format.line_spacing = 1.10
+p_d4.paragraph_format.space_after = Pt(2)
+p_d4.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+r_d4 = p_d4.add_run(disc_text4)
+r_d4.font.name = "Times New Roman"
+r_d4.font.size = Pt(10.5)
 
-disc_text4 = (
+disc_text5 = (
     "Limitations and Research Integrity: Notwithstanding these encouraging results, several research limitations must be acknowledged. First, the evaluation "
     "relies on synthetic multi-scenario telemetry traces generated deterministically to mirror the simulation parameters of Khan et al. (2026). While synthetic "
     "fixtures enable strict reproducibility and controlled ablation, they do not fully capture physical radio-frequency channel impairments, multipath "
@@ -592,13 +601,13 @@ disc_text4 = (
     "hardware (e.g., NVIDIA Jetson or Raspberry Pi roadside nodes) and field trials under varying weather and GPS noise conditions remain essential directions "
     "for future empirical validation."
 )
-p_d4 = doc.add_paragraph()
-p_d4.paragraph_format.line_spacing = 1.15
-p_d4.paragraph_format.space_after = Pt(10)
-p_d4.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-r_d4 = p_d4.add_run(disc_text4)
-r_d4.font.name = "Times New Roman"
-r_d4.font.size = Pt(11)
+p_d5 = doc.add_paragraph()
+p_d5.paragraph_format.line_spacing = 1.10
+p_d5.paragraph_format.space_after = Pt(4)
+p_d5.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+r_d5 = p_d5.add_run(disc_text5)
+r_d5.font.name = "Times New Roman"
+r_d5.font.size = Pt(10.5)
 
 # Save DOCX
 doc.save(docx_path)
