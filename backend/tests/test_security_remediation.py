@@ -1,4 +1,3 @@
-import os
 import time
 import uuid
 import pytest
@@ -10,8 +9,8 @@ from app.core.config import Settings
 from app.core.security import create_access_token
 from app.db.base import Base
 from app.db.session import engine, SessionLocal
-from app.db.init_db import provision_synthetic_fixture, init_database
-from app.models.entities import User, Workspace, WorkspaceMembership, Dataset, DatasetVersion, BackgroundJob
+from app.db.init_db import provision_synthetic_fixture
+from app.models.entities import User, WorkspaceMembership, Dataset, DatasetVersion, BackgroundJob
 from app.workers.task_runner import TaskRunner
 from app.ingestion.mendeley_downloader import MendeleyDatasetImporter
 
@@ -298,7 +297,7 @@ def test_background_job_lifecycle_and_cancellation():
     def dummy_task(job_id, db, cancel_event):
         for pct in [25, 50, 75]:
             if cancel_event.is_set():
-                return
+                return None
             TaskRunner.update_progress(job_id, pct)
             time.sleep(0.05)
         return {"status": "ok"}

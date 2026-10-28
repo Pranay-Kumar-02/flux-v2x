@@ -1,9 +1,7 @@
 import numpy as np
 import polars as pl
-import pytest
 from app.ml.spatiotemporal import SpatiotemporalClusterer
 from app.ml.baselines import LocalizedBaselineEngine
-from app.ml.session_builder import SessionBuilder
 from app.ml.splits import SplitEngine
 from app.ml.evaluation import EvaluationEngine
 

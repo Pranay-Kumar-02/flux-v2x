@@ -5,7 +5,7 @@ import datetime
 import logging
 import joblib
 from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 import polars as pl
@@ -36,14 +36,14 @@ def _run_experiment_async(
     exp_id: str,
     version_file_path: str,
     exp_in_dict: Dict[str, Any]
-):
+) -> Optional[Dict[str, Any]]:
     """
     Dedicated background worker task for model training.
     Executes in a separate thread/process with its own isolated DB session.
     """
     exp = db.query(Experiment).filter(Experiment.id == exp_id).first()
     if not exp:
-        return
+        return None
 
     exp.status = "running"
     db.commit()
@@ -52,7 +52,7 @@ def _run_experiment_async(
     try:
         TaskRunner.update_progress(job_id, 15, {"stage": "loading_data"})
         if cancel_event.is_set():
-            return
+            return None
 
         if not os.path.exists(version_file_path):
             raise FileNotFoundError(f"Dataset version file not found at: {version_file_path}")
@@ -146,7 +146,7 @@ def _run_experiment_async(
 
         TaskRunner.update_progress(job_id, 85, {"stage": "evaluating_metrics"})
         if cancel_event.is_set():
-            return
+            return None
 
         # Evaluation metrics
         metrics = EvaluationEngine.compute_metrics(y_test, y_pred, y_prob)
@@ -246,7 +246,7 @@ def launch_experiment(
     db.refresh(exp)
 
     # 3. Submit real asynchronous background task
-    job_id = TaskRunner.submit_task(
+    TaskRunner.submit_task(
         workspace_id=workspace.id,
         job_type="model_training",
         target_fn=_run_experiment_async,

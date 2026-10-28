@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 from typing import Dict, Any, List, Optional
 from sklearn.metrics import (
@@ -12,6 +13,8 @@ from sklearn.metrics import (
     average_precision_score,
 )
 from scipy.stats import chi2, binom
+
+logger = logging.getLogger(__name__)
 
 
 class EvaluationEngine:
@@ -60,8 +63,8 @@ class EvaluationEngine:
                 step_pr = max(1, len(p_vals) // 50)
                 for i in range(0, len(p_vals), step_pr):
                     pr_pts.append({"recall": round(float(r_vals[i]), 4), "precision": round(float(p_vals[i]), 4)})
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("ROC/PR curve computation skipped: %s", exc)
 
         return {
             "accuracy": round(acc, 4),

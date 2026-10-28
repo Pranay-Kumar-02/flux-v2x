@@ -1,11 +1,12 @@
 import os
 import datetime
-import hashlib
+import logging
 from typing import Dict, Any, Optional, Tuple
 import httpx
-import polars as pl
 from app.core.config import settings
 from app.ingestion.parser import IngestionEngine
+
+logger = logging.getLogger(__name__)
 
 MENDELEY_DOI = "10.17632/2jvknhv465.1"
 MENDELEY_URL = "https://doi.org/10.17632/2jvknhv465.1"
@@ -106,7 +107,7 @@ class MendeleyDatasetImporter:
                                     os.remove(temp_path)
                     except Exception:
                         continue
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Mendeley repository automatic download unavailable: %s", exc)
 
         return None

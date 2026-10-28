@@ -1,9 +1,12 @@
+import logging
 import numpy as np
 import polars as pl
 from typing import Dict, Any, List, Optional
 from app.acafdm.policy import ACAFDMDecisionPolicy
 from app.ml.spatiotemporal import SpatiotemporalClusterer
 from app.ml.baselines import LocalizedBaselineEngine
+
+logger = logging.getLogger(__name__)
 
 
 class ACAFDMEngine:
@@ -96,8 +99,8 @@ class ACAFDMEngine:
                         model_scores = model.predict_proba(X)[:, 1]
                     else:
                         model_scores = model.predict(X).astype(float)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("Model score computation fell back to default: %s", exc)
 
         for idx in range(df_clustered.height):
             c_id = int(cluster_labels[idx])

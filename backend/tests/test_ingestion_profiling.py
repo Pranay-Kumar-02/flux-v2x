@@ -1,7 +1,6 @@
 import os
 import tempfile
 import polars as pl
-import pytest
 from app.ingestion.parser import IngestionEngine
 from app.profiling.profiler import DatasetProfiler
 

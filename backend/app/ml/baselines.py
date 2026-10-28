@@ -1,6 +1,6 @@
 import numpy as np
 import polars as pl
-from typing import Dict, Any, Tuple
+from typing import Dict, Tuple
 
 
 class LocalizedBaselineEngine:

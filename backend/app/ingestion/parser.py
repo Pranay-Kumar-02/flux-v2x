@@ -1,9 +1,12 @@
 import os
 import hashlib
 import json
-from typing import Tuple, Dict, Any, List
+import logging
+from typing import Tuple, Dict, List
 import polars as pl
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 
 class IngestionEngine:
@@ -47,8 +50,8 @@ class IngestionEngine:
                     return "tsv"
                 if "," in decoded:
                     return "csv"
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("Sniffing content format encountered decode issue: %s", exc)
         return "csv"
 
     @classmethod

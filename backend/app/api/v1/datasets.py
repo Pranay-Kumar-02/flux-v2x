@@ -6,14 +6,13 @@ import shutil
 import logging
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query, status
-from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 import polars as pl
 
 from app.db.session import get_db
 from app.core.config import settings
 from app.models.entities import Dataset, DatasetVersion, DatasetProfile, Workspace, User
-from app.schemas.api_models import DatasetOut, DatasetVersionOut, DatasetPreview, DatasetProfileOut
+from app.schemas.api_models import DatasetOut, DatasetPreview, DatasetProfileOut
 from app.api.deps import get_current_user, get_current_workspace
 from app.ingestion.parser import IngestionEngine
 from app.profiling.profiler import DatasetProfiler

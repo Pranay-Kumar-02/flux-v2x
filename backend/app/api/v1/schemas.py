@@ -1,6 +1,6 @@
 import uuid
 import datetime
-from typing import List, Dict
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 import polars as pl
@@ -62,7 +62,7 @@ def create_schema_mapping(
     workspace: Workspace = Depends(get_current_workspace),
     db: Session = Depends(get_db)
 ):
-    version = _get_verified_dataset_version(db, dataset_version_id, workspace.id)
+    _get_verified_dataset_version(db, dataset_version_id, workspace.id)
 
     mapping_id = str(uuid.uuid4())
     rec = SchemaMapping(

@@ -1,6 +1,6 @@
 import polars as pl
 import numpy as np
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 from app.acafdm.engine import ACAFDMEngine
 
 
@@ -34,14 +34,11 @@ class MitigationSimulator:
 
         total_records = df.height
         has_labels = "label" in df.columns
-        has_priority = "priority" in df.columns or "is_safety" in df.columns
 
         labels = df["label"].to_numpy() if has_labels else np.zeros(total_records, dtype=int)
         packet_counts = df["packet_count"].fill_null(10).to_numpy() if "packet_count" in df.columns else np.ones(total_records) * 10
-        byte_counts = df["byte_count"].fill_null(5000).to_numpy() if "byte_count" in df.columns else np.ones(total_records) * 5000
 
         unmitigated_total_packets = float(np.sum(packet_counts))
-        unmitigated_total_bytes = float(np.sum(byte_counts))
 
         simulated_delivered_packets = 0.0
         simulated_dropped_packets = 0.0
@@ -49,7 +46,6 @@ class MitigationSimulator:
         malicious_packets_passed = 0.0
         benign_packets_dropped = 0.0
         benign_packets_passed = 0.0
-        safety_packets_protected = 0
 
         for i in range(total_records):
             pkts = float(packet_counts[i])

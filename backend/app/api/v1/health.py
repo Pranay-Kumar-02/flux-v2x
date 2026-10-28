@@ -1,11 +1,10 @@
-import os
 from typing import Optional
 from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.db.session import get_db
 from app.core.config import settings
-from app.models.entities import Dataset, Experiment, MitigationSimulation, BackgroundJob, WorkspaceMembership
+from app.models.entities import Dataset, Experiment, MitigationSimulation, WorkspaceMembership
 from app.schemas.api_models import SystemStatsOut
 from app.api.deps import oauth2_scheme
 from app.core.security import decode_access_token

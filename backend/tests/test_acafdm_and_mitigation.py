@@ -1,5 +1,4 @@
 import polars as pl
-import pytest
 from app.acafdm.policy import ACAFDMDecisionPolicy
 from app.acafdm.engine import ACAFDMEngine
 from app.simulation.simulator import MitigationSimulator

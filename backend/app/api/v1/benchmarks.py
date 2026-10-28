@@ -1,6 +1,6 @@
 import os
 import logging
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 import polars as pl
@@ -127,7 +127,6 @@ def run_mcnemar_test(
 
         baseline_engine = LocalizedBaselineEngine(metric_col="packet_rate")
         baseline_engine.fit(train_df, cluster_col="cluster_id", label_col="label" if "label" in train_df.columns else None)
-        train_df = baseline_engine.transform(train_df, cluster_col="cluster_id")
         test_df = baseline_engine.transform(test_df, cluster_col="cluster_id")
 
         y_true = test_df["label"].to_numpy()

@@ -5,7 +5,6 @@ from app.main import app
 from app.db.base import Base
 from app.db.session import engine, SessionLocal
 from app.db.init_db import provision_synthetic_fixture
-from app.models.entities import User, Workspace, WorkspaceMembership
 
 # Ensure clean schema initialization
 Base.metadata.create_all(bind=engine)

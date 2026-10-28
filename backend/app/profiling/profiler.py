@@ -1,6 +1,8 @@
+import logging
 import polars as pl
-import numpy as np
 from typing import Dict, Any, List
+
+logger = logging.getLogger(__name__)
 
 
 class DatasetProfiler:
@@ -52,8 +54,8 @@ class DatasetProfiler:
                         max_val = float(series.max())
                         mean_val = round(float(series.mean()), 4)
                         std_val = round(float(series.std()), 4) if series.std() is not None else 0.0
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        logger.debug("Column statistics calculation skipped for %s: %s", col_name, exc)
             elif is_temporal:
                 inferred_type = "timestamp"
             elif is_string:

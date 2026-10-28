@@ -1,6 +1,4 @@
 import polars as pl
-import numpy as np
-from typing import Dict, Any
 
 
 class SessionBuilder:

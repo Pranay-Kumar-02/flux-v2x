@@ -4,7 +4,6 @@ import uuid
 import datetime
 import logging
 from typing import Callable, Any, Dict, Optional
-from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
 from app.models.entities import BackgroundJob
 
