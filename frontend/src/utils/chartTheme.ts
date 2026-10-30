@@ -24,6 +24,17 @@ export interface ChartThemeTokens {
   palette: string[];
 }
 
+/**
+ * Global SVG Renderer Options for ECharts.
+ * Enforces true vector graphics rendering (<svg> DOM elements) rather than raster canvas,
+ * ensuring infinite vector crispness at 200%, 300%, and arbitrary zoom levels.
+ */
+export const SVG_RENDERER_OPTS = {
+  renderer: 'svg' as const,
+};
+
+export const CHART_FONT_FAMILY = 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+
 export const CHART_THEMES: Record<ThemeId, ChartThemeTokens> = {
   obsidian: {
     backgroundColor: 'transparent',

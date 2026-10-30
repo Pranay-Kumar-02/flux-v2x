@@ -19,16 +19,24 @@ os.makedirs(evidence_dir, exist_ok=True)
 fig_deliv_dir = os.path.join(deliv_dir, "figures")
 os.makedirs(fig_deliv_dir, exist_ok=True)
 
-# Copy SVG and PNG figures to both evidence and deliverable directories
+# Generate fresh publication-grade vector graphics (SVG, PDF, PNG)
+import subprocess
+print("Generating publication-grade vector graphics from experiment data...")
+subprocess.run([sys.executable, os.path.join(root_dir, "scratch", "generate_vector_publication_figures.py")], check=True)
+
+# Copy SVG, PDF, and PNG figures to both evidence and deliverable directories
 chart_bases = [
     "figure_2a_detection_performance",
+    "figure_2b_classification_errors",
+    "figure_2c_latency_overhead",
+    "figure_2d_model_comparison",
     "figure_2b_classification_error",
     "figure_2c_scenario_delay_overhead",
     "figure_2d_ablation_study"
 ]
 
 for cb in chart_bases:
-    for ext in [".png", ".svg"]:
+    for ext in [".png", ".svg", ".pdf"]:
         fn = cb + ext
         src = os.path.join(evidence_dir, fn)
         dst = os.path.join(fig_deliv_dir, fn)
@@ -465,39 +473,36 @@ r_s83.font.size = Pt(12)
 
 figures_info = [
     (
-        os.path.join(fig_deliv_dir, "figure_2a_detection_performance_hd.png"),
+        "{{FIGURE_2A}}",
         "Figure 2(a). ",
-        "Detection performance comparison between Non-Contextual Raw Gradient Boosting and proposed Context-Aware ACAFDM across Accuracy, Precision, Recall, and F1-score (high-definition capture from live FluxV2X platform at 2560px resolution).",
-        Inches(5.8)
+        "Detection performance comparison between Non-Contextual Raw Gradient Boosting and proposed Context-Aware ACAFDM across Accuracy, Precision, Recall, and F1-score (evaluated on disjoint held-out test split, N=478). True vector visualization generated from evaluated experiment metrics.",
     ),
     (
-        os.path.join(fig_deliv_dir, "figure_2b_classification_errors_hd.png"),
+        "{{FIGURE_2B}}",
         "Figure 2(b). ",
-        "Classification error analysis displaying False Positive Rate (FPR, left axis) and False Negative Rate (FNR, right axis) across dual honest scales (high-definition capture from live FluxV2X platform at 2560px resolution). ACAFDM suppresses false alarms from 1.63% to 1.08%.",
-        Inches(5.8)
+        "Classification error comparison displaying False Positive Rate (FPR, left panel; 0–2.5% scale) and False Negative Rate (FNR, right panel; 0–65% scale) across dual independent honest axes. ACAFDM suppresses false alarms by 33.7% (from 1.63% down to 1.08%, 4 of 369 benign flows). True vector visualization.",
     ),
     (
-        os.path.join(fig_deliv_dir, "figure_2c_latency_overhead_hd.png"),
+        "{{FIGURE_2C}}",
         "Figure 2(c). ",
-        "Detection delay (left axis, ms) and mitigation overhead (right axis, % collateral damage) across Highway and Metropolitan operational scenarios (high-definition capture from live FluxV2X platform at 2560px resolution).",
-        Inches(5.8)
+        "Operational detection delay (left panel, milliseconds) and selective mitigation overhead (right panel, % collateral damage) across Highway and Metropolitan operational scenarios. Both environments achieve sub-millisecond execution, strictly satisfying the safety latency bound (<5.0 ms). True vector visualization.",
     ),
     (
-        os.path.join(fig_deliv_dir, "figure_2d_model_comparison_hd.png"),
+        "{{FIGURE_2D}}",
         "Figure 2(d). ",
-        "Model family comparative analysis and component benchmark evaluating Accuracy, F1-score, and False Positive Rate across four independently trained configurations on the held-out test split (high-definition capture from live FluxV2X platform at 2560px resolution).",
-        Inches(5.8)
+        "Model-family comparative analysis and architectural ablation evaluating Accuracy, F1-score, and False Positive Rate across four independently trained configurations on the held-out test split (N=478). True vector visualization.",
     ),
 ]
 
-for img_path, cap_prefix, cap_text, img_width in figures_info:
+for tag, cap_prefix, cap_text in figures_info:
     p_img = doc.add_paragraph()
     p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p_img.paragraph_format.space_before = Pt(6)
     p_img.paragraph_format.space_after = Pt(2)
     p_img.paragraph_format.keep_with_next = True
-    run_img = p_img.add_run()
-    run_img.add_picture(img_path, width=img_width)
+    r_tag = p_img.add_run(tag)
+    r_tag.font.name = "Times New Roman"
+    r_tag.font.size = Pt(11)
     
     p_cap = doc.add_paragraph()
     p_cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -525,7 +530,7 @@ r_mcap_b.bold = True
 r_mcap_b.font.name = "Times New Roman"
 r_mcap_b.font.size = Pt(10.0)
 r_mcap_t = p_mcap.add_run(
-    "Comprehensive empirical evaluation visualizations generated directly from the live FluxV2X platform: (a) Detection performance comparison across standard classification metrics; "
+    "Comprehensive empirical evaluation visualizations generated as true publication-grade vector graphics from evaluated experiment metrics: (a) Detection performance comparison across standard classification metrics; "
     "(b) Dual-panel classification error distribution illustrating the trade-off between false alarms and omission errors; (c) Scenario-wise detection delay (ms) and mitigation overhead (% collateral damage); "
     "and (d) Architectural multi-family benchmark evaluating component contributions across four system configurations."
 )
@@ -632,28 +637,96 @@ r_d5 = p_d5.add_run(disc_text5)
 r_d5.font.name = "Times New Roman"
 r_d5.font.size = Pt(10.0)
 
-# Save DOCX
+# ------------------------------------------------------------------------------
+# 8.5 References
+# ------------------------------------------------------------------------------
+p_s85 = doc.add_paragraph()
+p_s85.paragraph_format.space_before = Pt(12)
+p_s85.paragraph_format.space_after = Pt(4)
+p_s85.paragraph_format.keep_with_next = True
+r_s85 = p_s85.add_run("8.5 References")
+r_s85.bold = True
+r_s85.font.name = "Times New Roman"
+r_s85.font.size = Pt(13)
+
+refs = [
+    "[1] M. D. Khan, N. Nnamoko, H. Rafiq, and A. Abubahia, \"Congestion-context-aware spatiotemporal detection of malicious flooding in vehicular communication networks,\" Vehicular Communications, vol. 54, art. 100912, 2026, Elsevier.",
+    "[2] M. A. Setitra and M. Fan, \"Detection of DDoS attacks in SDN-based VANET using optimized TabNet,\" Computer Standards & Interfaces, vol. 90, art. 103845, 2024.",
+    "[3] H. Karthikeyan and G. Usha, \"Real-time DDoS flooding attack detection in intelligent transportation systems,\" Computers and Electrical Engineering, vol. 101, art. 107995, 2022.",
+    "[4] M. Poongodi, V. Vijayakumar, F. Al-Turjman, M. Hamdi, and M. Ma, \"Intrusion prevention system for DDoS attack on VANET with reCAPTCHA controller using information based metrics,\" IEEE Access, vol. 7, pp. 158481-158491, 2019.",
+    "[5] M. K. Tanati and M. Ponnusamy, \"Dense capsule stacked auto-encoder model based DDoS attack detection and hybrid optimal bandwidth allocation with routing in VANET environment,\" Vehicular Communications, vol. 52, art. 100888, 2025.",
+    "[6] A. Verma, R. Saha, G. Kumar, and M. Conti, \"PETRAK: A solution against DDoS attacks in vehicular networks,\" Computer Communications, vol. 221, pp. 142-154, 2024.",
+    "[7] G. O. Anyanwu, C. I. Nwakanma, J. M. Lee, and D. S. Kim, \"RBF-SVM kernel-based model for detecting DDoS attacks in SDN integrated vehicular network,\" Ad Hoc Networks, vol. 140, art. 103026, 2023.",
+    "[8] S. Gayathri et al., \"Machine learning-enhanced DDoS attack detection and mitigation in VANET infrastructure,\" Transactions on Emerging Telecommunications Technologies, vol. 36, no. 2, art. e5012, 2025.",
+    "[9] S. Batool et al., \"Lightweight statistical approach towards TCP SYN flood DDoS attack detection and mitigation in SDN environment,\" Security and Communication Networks, vol. 2022, art. 2593672, 2022.",
+    "[10] C. H. Yang, J. P. Wu, F. Y. Lee, T. Y. Lin, and M. H. Tsai, \"Detection and mitigation of SYN flooding attacks through SYN/ACK packets and black/white lists,\" Sensors, vol. 23, no. 8, art. 3817, 2023.",
+    "[11] T. Nandy, R. M. Noor, R. Kolandaisamy, M. Y. I. Idris, and S. Bhattacharyya, \"A review of security attacks and intrusion detection in the vehicular networks,\" Journal of King Saud University - Computer and Information Sciences, vol. 36, art. 101945, 2024.",
+    "[12] M. Sajid et al., \"Enhancing intrusion detection: a hybrid machine and deep learning approach,\" Journal of Cloud Computing, vol. 13, no. 1, art. 123, 2024."
+]
+
+for ref_text in refs:
+    p_ref = doc.add_paragraph()
+    p_ref.paragraph_format.line_spacing = 1.10
+    p_ref.paragraph_format.space_after = Pt(3)
+    p_ref.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    r_ref = p_ref.add_run(ref_text)
+    r_ref.font.name = "Times New Roman"
+    r_ref.font.size = Pt(9.5)
+
+# Save intermediate DOCX with placeholders
 doc.save(docx_path)
-shutil.copy2(docx_path, root_docx_path)
-print(f"Successfully generated DOCX at:\n{docx_path}\nand\n{root_docx_path}")
+print(f"Saved initial DOCX structure to {docx_path}")
 
 # ------------------------------------------------------------------------------
-# 3. CONVERT DOCX TO PDF USING WORD COM
+# 3. WORD COM: EMBED NATIVE VECTOR SVGS AND EXPORT TO DOCX & PDF
 # ------------------------------------------------------------------------------
-print("Converting DOCX to PDF using Word COM...")
+print("Opening DOCX in Word COM to embed native vector SVGs and convert to PDF...")
 import win32com.client
 word = win32com.client.Dispatch("Word.Application")
 word.Visible = False
 try:
-    doc_com = word.Documents.Open(docx_path)
-    # wdFormatPDF = 17
-    doc_com.SaveAs(pdf_path, FileFormat=17)
-    doc_com.Close()
+    doc_com = word.Documents.Open(os.path.abspath(docx_path))
+    
+    placeholders = [
+        ("{{FIGURE_2A}}", os.path.abspath(os.path.join(evidence_dir, "figure_2a_detection_performance.svg"))),
+        ("{{FIGURE_2B}}", os.path.abspath(os.path.join(evidence_dir, "figure_2b_classification_errors.svg"))),
+        ("{{FIGURE_2C}}", os.path.abspath(os.path.join(evidence_dir, "figure_2c_latency_overhead.svg"))),
+        ("{{FIGURE_2D}}", os.path.abspath(os.path.join(evidence_dir, "figure_2d_model_comparison.svg"))),
+    ]
+    
+    for tag, svg_file in placeholders:
+        find = doc_com.Content.Find
+        find.ClearFormatting()
+        find.Execute(FindText=tag)
+        if find.Found:
+            print(f"Embedding vector SVG for {tag} -> {svg_file}")
+            rng = find.Parent
+            rng.Text = ""
+            shape = rng.InlineShapes.AddPicture(FileName=svg_file, LinkToFile=False, SaveWithDocument=True)
+            shape.Width = 420  # 5.83 in points
+            shape.Range.ParagraphFormat.Alignment = 1  # wdAlignParagraphCenter
+            shape.Range.ParagraphFormat.SpaceBefore = 6
+            shape.Range.ParagraphFormat.SpaceAfter = 2
+        else:
+            print(f"WARNING: Placeholder {tag} not found!")
+            
+    # Save the updated DOCX with embedded native vector SVGs
+    doc_com.Save()
+    print(f"Saved DOCX with embedded vector SVGs to {docx_path}")
+    
+    # Export to PDF (wdFormatPDF = 17)
+    doc_com.SaveAs(os.path.abspath(pdf_path), FileFormat=17)
+    print(f"Saved PDF to {pdf_path}")
+    doc_com.Close(SaveChanges=False)
+    
+    shutil.copy2(docx_path, root_docx_path)
     shutil.copy2(pdf_path, root_pdf_path)
-    print(f"Successfully generated PDF at:\n{pdf_path}\nand\n{root_pdf_path}")
+    print(f"Successfully copied final deliverables to project root:\n{root_docx_path}\n{root_pdf_path}")
 except Exception as e:
     print(f"Word COM conversion error: {e}")
+    raise e
 finally:
     word.Quit()
 
 print("FINAL DELIVERABLE GENERATION COMPLETE.")
+

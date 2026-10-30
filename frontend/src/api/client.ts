@@ -230,15 +230,18 @@ export async function ensureAuthenticatedSession(): Promise<string> {
         if (res.ok) {
           const data = await res.json();
           setAuthToken(data.access_token);
-          // Auto-select first workspace if none set
+          // Auto-select first workspace if none set or invalid
           try {
             const wsRes = await fetch(`${API_BASE}/auth/workspaces`, {
               headers: { Authorization: `Bearer ${data.access_token}` },
             });
             if (wsRes.ok) {
               const wsList = await wsRes.json();
-              if (Array.isArray(wsList) && wsList.length > 0 && !getActiveWorkspaceId()) {
-                setActiveWorkspaceId(wsList[0].id);
+              if (Array.isArray(wsList) && wsList.length > 0) {
+                const currentWs = getActiveWorkspaceId();
+                if (!currentWs || !wsList.some((w: any) => w.id === currentWs)) {
+                  setActiveWorkspaceId(wsList[0].id);
+                }
               }
             }
           } catch (_) {}
@@ -280,8 +283,9 @@ async function request<T>(url: string, options?: RequestInit, isRetry = false): 
     headers,
   });
 
-  if (res.status === 401 && !isRetry && !url.startsWith('/auth/login')) {
+  if ((res.status === 401 || res.status === 403) && !isRetry && !url.startsWith('/auth/login')) {
     localStorage.removeItem('fluxv2x_access_token');
+    localStorage.removeItem('fluxv2x_workspace_id');
     await ensureAuthenticatedSession();
     return request<T>(url, options, true);
   }
@@ -427,4 +431,131 @@ export const api = {
   listJobs: () => request<BackgroundJob[]>('/jobs'),
   getJob: (jobId: string) => request<BackgroundJob>(`/jobs/${jobId}`),
   cancelJob: (jobId: string) => request<{ message: string }>(`/jobs/${jobId}/cancel`, { method: 'POST' }),
+
+  // Co-Simulation Studio (SUMO + NS-3 + ACAFDM)
+  getCoSimStatus: () => request<CoSimStatus>('/cosim/status'),
+  listCoSimScenarios: () => request<{ scenarios: CoSimScenario[]; sumo_version: string; ns3_version: string; wireless_standard: string }>('/cosim/scenarios'),
+  getCoSimTopology: (scenarioId: string = 'scenario_a') => request<CoSimTopology>(`/cosim/topology?scenario_id=${scenarioId}`),
+  startCoSim: (payload: CoSimStartPayload) => request<any>('/cosim/start', { method: 'POST', body: JSON.stringify(payload) }),
+  pauseCoSim: () => request<any>('/cosim/pause', { method: 'POST' }),
+  resumeCoSim: () => request<any>('/cosim/resume', { method: 'POST' }),
+  stopCoSim: () => request<any>('/cosim/stop', { method: 'POST' }),
+  getCoSimTelemetry: () => request<{ experiment_id: string; history: any[] }>('/cosim/telemetry'),
 };
+
+export interface CoSimScenario {
+  id: string;
+  name: string;
+  type: string;
+  description: string;
+  duration: number;
+  default_demand_period: number;
+  speed_limit: number;
+  rsus: Array<{ id: string; name: string; x: number; y: number; range: number; type: string }>;
+}
+
+export interface CoSimTopology {
+  scenario_id: string;
+  scenario_name: string;
+  bbox: { min_x: number; min_y: number; max_x: number; max_y: number };
+  edges: Array<{ id: string; from_node: string; to_node: string; speed: number; lanes: number; shape: number[][] }>;
+  junctions: Array<{ id: string; x: number; y: number; type: string }>;
+  rsus: Array<{ id: string; name: string; x: number; y: number; range: number; type: string }>;
+  edge_count: number;
+  junction_count: number;
+  rsu_count: number;
+}
+
+export interface CoSimVehicle {
+  id: string;
+  x: number;
+  y: number;
+  speed: number;
+  speed_kmh: number;
+  angle: number;
+  road_id: string;
+  lane_id: string;
+  is_attacker: boolean;
+  packet_rate: number;
+  rate_limit_ratio: number;
+  z_score: number;
+  decision: string;
+  streak: number;
+}
+
+export interface CoSimStatus {
+  status: 'IDLE' | 'STARTING' | 'RUNNING' | 'PAUSED' | 'COMPLETED' | 'STOPPED' | 'ERROR';
+  error_message?: string;
+  experiment_id: string;
+  scenario_id: string;
+  scenario_name: string;
+  sim_clock: number;
+  duration: number;
+  step_index: number;
+  active_vehicle_count: number;
+  active_rsu_count: number;
+  total_observations: number;
+  attack: {
+    enabled: boolean;
+    attacker_id?: string;
+    target_rsu: string;
+    intensity: number;
+    start_time: number;
+    is_active_now: boolean;
+  };
+  network_metrics: {
+    total_tx: number;
+    total_rx: number;
+    total_dropped: number;
+    malicious_dropped: number;
+    benign_preserved: number;
+    pdr: number;
+    throughput_mbps: number;
+    delay_ms: number;
+    mitigation_efficiency: number;
+    ns3_engine: string;
+  };
+  vehicles: CoSimVehicle[];
+  rsus: Array<{ id: string; name: string; x: number; y: number; range: number; type: string }>;
+  recent_events: Array<{
+    timestamp: number;
+    node_id: string;
+    is_attacker: boolean;
+    target_rsu: string;
+    packet_rate: number;
+    z_score: number;
+    decision: string;
+    reason: string;
+    mitigation_enforced: boolean;
+    protocol: string;
+  }>;
+  telemetry_history: Array<{
+    time: number;
+    active_vehicles: number;
+    tx: number;
+    rx: number;
+    dropped: number;
+    pdr: number;
+    throughput_mbps: number;
+    delay_ms: number;
+    jitter_ms: number;
+    attack_active: boolean;
+    mitigated_nodes: number;
+  }>;
+}
+
+export interface CoSimStartPayload {
+  scenario_id: string;
+  duration?: number;
+  demand_period?: number;
+  random_seed?: number;
+  attack_enabled?: boolean;
+  attacker_id?: string;
+  target_rsu?: string;
+  attack_intensity?: number;
+  attack_start_time?: number;
+  attack_duration?: number;
+  persistence_k?: number;
+  z_threshold?: number;
+  rate_limit_ratio?: number;
+}

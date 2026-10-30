@@ -3,7 +3,7 @@ import ReactECharts from 'echarts-for-react';
 import { Compass, Layers } from 'lucide-react';
 import { api, Dataset } from '../api/client';
 import { useTheme } from '../context/ThemeContext';
-import { getChartTokens } from '../utils/chartTheme';
+import { getChartTokens, SVG_RENDERER_OPTS, CHART_FONT_FAMILY } from '../utils/chartTheme';
 
 interface ContextExplorerViewProps {
   activeDataset?: Dataset | null;
@@ -69,11 +69,11 @@ export const ContextExplorerView: React.FC<ContextExplorerViewProps> = ({ active
         backgroundColor: ct.tooltipBg,
         borderColor: ct.tooltipBorder,
         borderWidth: 1,
-        textStyle: { color: ct.tooltipText, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        textStyle: { color: ct.tooltipText, fontSize: 11, fontFamily: CHART_FONT_FAMILY },
         formatter: (params: any) => {
           const d = params.value;
           return `
-            <div style="font-weight: 500; color: ${ct.tooltipText}; margin-bottom: 2px;">Receiver Node: ${d[6]}</div>
+            <div style="font-weight: 600; color: ${ct.tooltipText}; margin-bottom: 2px;">Receiver Node: ${d[6]}</div>
             <div style="color: ${ct.axisLabel};">Position: (${d[0]}, ${d[1]})</div>
             <div style="color: ${ct.axisLabel};">Cluster: C${d[2]} • Rate: ${d[4]} pps</div>
             <div style="color: ${ct.axisLabel};">Contextual Z-Score: ${d[5]}</div>
@@ -83,20 +83,30 @@ export const ContextExplorerView: React.FC<ContextExplorerViewProps> = ({ active
           `;
         },
       },
-      grid: { left: '4%', right: '3%', top: '6%', bottom: '10%' },
+      grid: {
+        left: 55,
+        right: 35,
+        top: 35,
+        bottom: 45,
+        containLabel: true,
+      },
       xAxis: {
         name: contextData.has_spatial_coordinates ? 'Receiver X (m)' : 'Timestamp (s)',
-        nameTextStyle: { color: ct.nameText, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        nameLocation: 'middle',
+        nameGap: 28,
+        nameTextStyle: { color: ct.nameText, fontSize: 11, fontFamily: CHART_FONT_FAMILY, fontWeight: 500 },
         axisLine: { lineStyle: { color: ct.axisLine } },
         splitLine: { lineStyle: { color: ct.splitLine } },
-        axisLabel: { color: ct.axisLabel, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        axisLabel: { color: ct.axisLabel, fontSize: 10, fontFamily: CHART_FONT_FAMILY },
       },
       yAxis: {
         name: contextData.has_spatial_coordinates ? 'Receiver Y (m)' : 'Packet Rate (pps)',
-        nameTextStyle: { color: ct.nameText, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        nameLocation: 'middle',
+        nameGap: 38,
+        nameTextStyle: { color: ct.nameText, fontSize: 11, fontFamily: CHART_FONT_FAMILY, fontWeight: 500 },
         axisLine: { lineStyle: { color: ct.axisLine } },
         splitLine: { lineStyle: { color: ct.splitLine } },
-        axisLabel: { color: ct.axisLabel, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        axisLabel: { color: ct.axisLabel, fontSize: 10, fontFamily: CHART_FONT_FAMILY },
       },
       series: [
         {
@@ -130,28 +140,53 @@ export const ContextExplorerView: React.FC<ContextExplorerViewProps> = ({ active
         trigger: 'axis',
         backgroundColor: ct.tooltipBg,
         borderColor: ct.tooltipBorder,
-        textStyle: { color: ct.tooltipText, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        borderWidth: 1,
+        textStyle: { color: ct.tooltipText, fontSize: 11, fontFamily: CHART_FONT_FAMILY },
       },
-      grid: { left: '8%', right: '4%', top: '12%', bottom: '18%' },
+      grid: {
+        left: 55,
+        right: 25,
+        top: 35,
+        bottom: 55,
+        containLabel: true,
+      },
       xAxis: {
         type: 'category',
-        data: scenarios.map((s) => s.replace(/_/g, ' ')),
-        axisLabel: { color: ct.axisLabel, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        data: scenarios.map((s) => s.replace(/_/g, '\n')),
+        axisLabel: {
+          color: ct.axisLabel,
+          fontSize: 10,
+          fontFamily: CHART_FONT_FAMILY,
+          interval: 0,
+          lineHeight: 13,
+        },
         axisLine: { lineStyle: { color: ct.axisLine } },
       },
       yAxis: {
         type: 'value',
         name: 'Rate (pps)',
-        nameTextStyle: { color: ct.nameText, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        nameLocation: 'middle',
+        nameGap: 38,
+        nameTextStyle: { color: ct.nameText, fontSize: 11, fontFamily: CHART_FONT_FAMILY, fontWeight: 500 },
         splitLine: { lineStyle: { color: ct.splitLine } },
-        axisLabel: { color: ct.axisLabel, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        axisLabel: { color: ct.axisLabel, fontSize: 10, fontFamily: CHART_FONT_FAMILY },
       },
       series: [
         {
           name: 'Mean Rate',
           type: 'bar',
           data: avgRates,
-          itemStyle: { color: ct.accent, borderRadius: [3, 3, 0, 0] },
+          itemStyle: { color: ct.accent, borderRadius: [4, 4, 0, 0] },
+          barMaxWidth: 36,
+          label: {
+            show: true,
+            position: 'top',
+            formatter: '{c} pps',
+            color: ct.nameText,
+            fontSize: 10,
+            fontFamily: CHART_FONT_FAMILY,
+            distance: 4,
+          },
         },
       ],
     };
@@ -238,7 +273,12 @@ export const ContextExplorerView: React.FC<ContextExplorerViewProps> = ({ active
                 </div>
 
                 <div className="h-96 w-full">
-                  <ReactECharts option={getScatterOption()} notMerge={true} style={{ height: '100%', width: '100%' }} />
+                  <ReactECharts
+                    option={getScatterOption()}
+                    notMerge={true}
+                    opts={SVG_RENDERER_OPTS}
+                    style={{ height: '100%', width: '100%' }}
+                  />
                 </div>
               </div>
 
@@ -254,7 +294,12 @@ export const ContextExplorerView: React.FC<ContextExplorerViewProps> = ({ active
                 </div>
 
                 <div className="h-80 w-full my-auto">
-                  <ReactECharts option={getScenarioBarOption()} notMerge={true} style={{ height: '100%', width: '100%' }} />
+                  <ReactECharts
+                    option={getScenarioBarOption()}
+                    notMerge={true}
+                    opts={SVG_RENDERER_OPTS}
+                    style={{ height: '100%', width: '100%' }}
+                  />
                 </div>
 
                 <div className="text-[11px] text-flux-secondary pt-2 border-t border-flux-border/40">

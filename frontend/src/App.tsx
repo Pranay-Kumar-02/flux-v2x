@@ -11,6 +11,7 @@ import { BenchmarkCenterView } from './views/BenchmarkCenterView';
 import { MitigationSimulatorView } from './views/MitigationSimulatorView';
 import { ExperimentInspectorView } from './views/ExperimentInspectorView';
 import { AuditView } from './views/AuditView';
+import { CoSimulationStudioView } from './views/CoSimulationStudioView';
 import { api, Dataset } from './api/client';
 import { ThemeProvider } from './context/ThemeContext';
 
@@ -36,6 +37,10 @@ const AppContent: React.FC = () => {
     overview: {
       title: 'Research Command Center',
       subtitle: 'System Health, Live Inventory & Experiment Metrics',
+    },
+    cosim: {
+      title: 'Co-Simulation Studio',
+      subtitle: 'Synchronized SUMO Mobility, NS-3 WAVE 802.11p Wireless & ACAFDM Flooding Mitigation',
     },
     datasets: {
       title: 'Dataset Library & Ingestion',
@@ -92,6 +97,7 @@ const AppContent: React.FC = () => {
 
         <main className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6">
           {currentView === 'overview' && <OverviewView onNavigate={setCurrentView} />}
+          {currentView === 'cosim' && <CoSimulationStudioView />}
           {currentView === 'datasets' && (
             <DatasetLibraryView onSelectDataset={setActiveDataset} />
           )}

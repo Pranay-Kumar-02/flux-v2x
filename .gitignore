@@ -75,3 +75,9 @@ coverage.xml
 *~
 .DS_Store
 Thumbs.db
+
+# Co-Simulation Binaries & Temp files
+backend/app/cosim/ns3_runner
+backend/test_sumo_mgr.py
+scratch_check_db.py
+trips.trips.xml

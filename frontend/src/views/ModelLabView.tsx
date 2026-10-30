@@ -3,7 +3,7 @@ import ReactECharts from 'echarts-for-react';
 import { Play, RotateCcw, Cpu } from 'lucide-react';
 import { api, Dataset, Experiment } from '../api/client';
 import { useTheme } from '../context/ThemeContext';
-import { getChartTokens } from '../utils/chartTheme';
+import { getChartTokens, SVG_RENDERER_OPTS, CHART_FONT_FAMILY } from '../utils/chartTheme';
 
 interface ModelLabViewProps {
   activeDataset?: Dataset | null;
@@ -96,32 +96,53 @@ export const ModelLabView: React.FC<ModelLabViewProps> = ({ activeDataset }) => 
         trigger: 'axis',
         backgroundColor: ct.tooltipBg,
         borderColor: ct.tooltipBorder,
-        textStyle: { color: ct.tooltipText, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        borderWidth: 1,
+        textStyle: { color: ct.tooltipText, fontSize: 11, fontFamily: CHART_FONT_FAMILY },
         formatter: (params: any) => {
           const pt = params[0].value;
-          return `FPR: ${pt[0]}<br/>TPR: ${pt[1]}`;
+          return `FPR: ${(pt[0] * 100).toFixed(2)}%<br/>TPR: ${(pt[1] * 100).toFixed(2)}%`;
         },
       },
-      grid: { left: '8%', right: '4%', top: '8%', bottom: '15%' },
+      grid: {
+        left: 55,
+        right: 30,
+        top: 25,
+        bottom: 48,
+        containLabel: true,
+      },
       xAxis: {
         type: 'value',
         name: 'False Positive Rate',
-        nameTextStyle: { color: ct.nameText, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        nameLocation: 'middle',
+        nameGap: 28,
+        nameTextStyle: { color: ct.nameText, fontSize: 11, fontFamily: CHART_FONT_FAMILY, fontWeight: 500 },
         min: 0,
         max: 1,
         axisLine: { lineStyle: { color: ct.axisLine } },
         splitLine: { lineStyle: { color: ct.splitLine } },
-        axisLabel: { color: ct.axisLabel, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        axisLabel: {
+          color: ct.axisLabel,
+          fontSize: 10,
+          fontFamily: CHART_FONT_FAMILY,
+          formatter: (v: number) => `${(v * 100).toFixed(0)}%`,
+        },
       },
       yAxis: {
         type: 'value',
         name: 'True Positive Rate',
-        nameTextStyle: { color: ct.nameText, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        nameLocation: 'middle',
+        nameGap: 38,
+        nameTextStyle: { color: ct.nameText, fontSize: 11, fontFamily: CHART_FONT_FAMILY, fontWeight: 500 },
         min: 0,
         max: 1,
         axisLine: { lineStyle: { color: ct.axisLine } },
         splitLine: { lineStyle: { color: ct.splitLine } },
-        axisLabel: { color: ct.axisLabel, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' },
+        axisLabel: {
+          color: ct.axisLabel,
+          fontSize: 10,
+          fontFamily: CHART_FONT_FAMILY,
+          formatter: (v: number) => `${(v * 100).toFixed(0)}%`,
+        },
       },
       series: [
         {
@@ -130,7 +151,7 @@ export const ModelLabView: React.FC<ModelLabViewProps> = ({ activeDataset }) => 
           data: pts,
           smooth: true,
           itemStyle: { color: ct.accent },
-          lineStyle: { width: 1.5 },
+          lineStyle: { width: 2 },
           areaStyle: { color: ct.accent, opacity: 0.12 },
         },
       ],
@@ -406,8 +427,13 @@ export const ModelLabView: React.FC<ModelLabViewProps> = ({ activeDataset }) => 
                       AUC: {selectedExp.metrics.roc_auc ?? 'N/A'}
                     </span>
                   </div>
-                  <div className="h-48 w-full">
-                    <ReactECharts option={getRocOption()} notMerge={true} style={{ height: '100%', width: '100%' }} />
+                  <div className="h-64 w-full">
+                    <ReactECharts
+                      option={getRocOption()}
+                      notMerge={true}
+                      opts={SVG_RENDERER_OPTS}
+                      style={{ height: '100%', width: '100%' }}
+                    />
                   </div>
                 </div>
               </div>

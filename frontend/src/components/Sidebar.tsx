@@ -10,11 +10,13 @@ import {
   Flame,
   FileSearch,
   Activity,
-  Layers
+  Layers,
+  Radio
 } from 'lucide-react';
 
 export type NavView =
   | 'overview'
+  | 'cosim'
   | 'datasets'
   | 'schema'
   | 'context'
@@ -33,6 +35,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate }) => {
   const navItems: { id: NavView; label: string; icon: React.ReactNode; badge?: string }[] = [
     { id: 'overview', label: 'Command Center', icon: <LayoutDashboard size={15} /> },
+    { id: 'cosim', label: 'Co-Simulation Studio', icon: <Radio size={15} />, badge: 'NS-3 + SUMO' },
     { id: 'datasets', label: 'Dataset Library', icon: <Database size={15} /> },
     { id: 'schema', label: 'Schema & Feature Lab', icon: <SlidersHorizontal size={15} /> },
     { id: 'context', label: 'Context Explorer', icon: <Compass size={15} /> },
