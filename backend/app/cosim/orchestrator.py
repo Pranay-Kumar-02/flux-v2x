@@ -66,6 +66,8 @@ class CoSimulationOrchestrator:
         # Live entities
         self.active_vehicles: List[Dict[str, Any]] = []
         self.active_rsus: List[Dict[str, Any]] = []
+        self.wireless_events: List[Dict[str, Any]] = []
+        self.recorded_frames: List[Dict[str, Any]] = []
         self.network_topology: Optional[Dict[str, Any]] = None
         
         # Telemetry & History (bounded ring buffers for charts)
@@ -96,7 +98,7 @@ class CoSimulationOrchestrator:
         return cls._instance
 
     def load_scenario_topology(self, scenario_id: str) -> Dict[str, Any]:
-        """Loads and parses road network geometry & RSU positions for the visualizer."""
+        """Loads and parses rich road network geometry, lane polylines, junction boundaries & 3D urban context."""
         if scenario_id not in SCENARIOS_META:
             scenario_id = "scenario_a"
 
@@ -111,32 +113,138 @@ class CoSimulationOrchestrator:
             bbox = net.getBBoxXY()
 
             edges = []
+            lanes = []
             for e in net.getEdges():
                 if e.getID().startswith(":"):
                     continue
+                edge_lanes = e.getLanes()
                 edges.append({
                     "id": e.getID(),
                     "from_node": e.getFromNode().getID(),
                     "to_node": e.getToNode().getID(),
                     "speed": round(e.getSpeed(), 1),
-                    "lanes": len(e.getLanes()),
+                    "lanes": len(edge_lanes),
                     "shape": [[round(pt[0], 2), round(pt[1], 2)] for pt in e.getShape()]
                 })
+                for idx, lane in enumerate(edge_lanes):
+                    lanes.append({
+                        "id": lane.getID(),
+                        "edge_id": e.getID(),
+                        "index": idx,
+                        "width": round(lane.getWidth(), 2),
+                        "speed": round(lane.getSpeed(), 1),
+                        "shape": [[round(pt[0], 2), round(pt[1], 2)] for pt in lane.getShape()]
+                    })
 
             junctions = []
             for n in net.getNodes():
                 coord = n.getCoord()
+                n_shape = [[round(pt[0], 2), round(pt[1], 2)] for pt in n.getShape()]
                 junctions.append({
                     "id": n.getID(),
                     "x": round(coord[0], 2),
                     "y": round(coord[1], 2),
-                    "type": n.getType()
+                    "type": n.getType(),
+                    "shape": n_shape
                 })
+
+            # Extract traffic light configurations
+            traffic_lights = []
+            try:
+                for tl in net.getTrafficLights():
+                    traffic_lights.append({
+                        "id": tl.getID(),
+                        "type": tl.getType()
+                    })
+            except Exception:
+                pass
+
+            # Generate real-scale urban blocks and architectural parcels
+            buildings = []
+            min_x, min_y = bbox[0][0], bbox[0][1]
+            max_x, max_y = bbox[1][0], bbox[1][1]
+            scen_type = self.scenario_meta.get("type", "urban")
+
+            if scen_type == "highway":
+                # Along highway (runs along Y ~ 50 from X=0 to 1000)
+                # Place roadside logistics centers, toll plaza admin buildings, sound barriers, tree belts
+                xs = [60, 180, 280, 420, 580, 720, 850]
+                palette = ["#1e293b", "#334155", "#1e1e2f", "#27273a", "#2c3e50"]
+                for idx, x in enumerate(xs):
+                    buildings.append({
+                        "id": f"bldg_n_{idx}",
+                        "x": float(x),
+                        "y": 105.0,
+                        "width": 55.0,
+                        "depth": 35.0,
+                        "height": 14.0 + (idx % 3) * 6.0,
+                        "type": "logistics" if idx % 2 == 0 else "commercial",
+                        "color": palette[idx % len(palette)]
+                    })
+                    buildings.append({
+                        "id": f"bldg_s_{idx}",
+                        "x": float(x + 40),
+                        "y": -10.0,
+                        "width": 45.0,
+                        "depth": 30.0,
+                        "height": 10.0 + ((idx + 1) % 3) * 5.0,
+                        "type": "industrial",
+                        "color": palette[(idx + 2) % len(palette)]
+                    })
+            else:
+                # Grid-based urban blocks
+                j_xs = sorted(list(set([round(j["x"], 1) for j in junctions if "x" in j])))
+                j_ys = sorted(list(set([round(j["y"], 1) for j in junctions if "y" in j])))
+                b_idx = 0
+                palette = ["#1e293b", "#283446", "#1a2234", "#2c3e50", "#232d3f", "#1f2937"]
+                
+                for i in range(len(j_xs) - 1):
+                    x1, x2 = j_xs[i], j_xs[i+1]
+                    if x2 - x1 < 40:
+                        continue
+                    for k in range(len(j_ys) - 1):
+                        y1, y2 = j_ys[k], j_ys[k+1]
+                        if y2 - y1 < 40:
+                            continue
+                        
+                        px1 = x1 + 14.0
+                        px2 = x2 - 14.0
+                        py1 = y1 + 14.0
+                        py2 = y2 - 14.0
+                        pw = px2 - px1
+                        pd = py2 - py1
+                        
+                        if pw > 30 and pd > 30:
+                            mid_x = (px1 + px2) / 2
+                            mid_y = (py1 + py2) / 2
+                            sub_w = (pw - 8.0) / 2
+                            sub_d = (pd - 8.0) / 2
+                            
+                            sub_coords = [
+                                (px1 + sub_w/2, py1 + sub_d/2, 26.0 + ((b_idx * 7) % 32), "office"),
+                                (mid_x + 4.0 + sub_w/2, py1 + sub_d/2, 20.0 + ((b_idx * 11) % 24), "commercial"),
+                                (px1 + sub_w/2, mid_y + 4.0 + sub_d/2, 34.0 + ((b_idx * 13) % 38), "tower"),
+                                (mid_x + 4.0 + sub_w/2, mid_y + 4.0 + sub_d/2, 18.0 + ((b_idx * 5) % 18), "residential")
+                            ]
+                            
+                            for sx, sy, sh, stype in sub_coords:
+                                buildings.append({
+                                    "id": f"bldg_{b_idx}",
+                                    "x": round(sx, 1),
+                                    "y": round(sy, 1),
+                                    "width": round(sub_w, 1),
+                                    "depth": round(sub_d, 1),
+                                    "height": round(sh, 1),
+                                    "type": stype,
+                                    "color": palette[b_idx % len(palette)]
+                                })
+                                b_idx += 1
 
             self.active_rsus = self.scenario_meta.get("rsus", [])
             self.network_topology = {
                 "scenario_id": scenario_id,
                 "scenario_name": self.scenario_meta["name"],
+                "scenario_type": scen_type,
                 "bbox": {
                     "min_x": bbox[0][0],
                     "min_y": bbox[0][1],
@@ -144,16 +252,21 @@ class CoSimulationOrchestrator:
                     "max_y": bbox[1][1]
                 },
                 "edges": edges,
+                "lanes": lanes,
                 "junctions": junctions,
+                "traffic_lights": traffic_lights,
+                "buildings": buildings,
                 "rsus": self.active_rsus,
                 "edge_count": len(edges),
+                "lane_count": len(lanes),
                 "junction_count": len(junctions),
+                "building_count": len(buildings),
                 "rsu_count": len(self.active_rsus)
             }
             return self.network_topology
         except Exception as e:
             logger.error(f"Error loading scenario topology: {e}", exc_info=True)
-            return {"error": str(e), "edges": [], "junctions": [], "rsus": [], "bbox": {"min_x": 0, "min_y": 0, "max_x": 500, "max_y": 500}}
+            return {"error": str(e), "edges": [], "lanes": [], "junctions": [], "buildings": [], "rsus": [], "bbox": {"min_x": 0, "min_y": 0, "max_x": 500, "max_y": 500}}
 
     def start_simulation(
         self,
@@ -212,6 +325,8 @@ class CoSimulationOrchestrator:
             self.telemetry_history = []
             self.recent_events = []
             self.active_vehicles = []
+            self.wireless_events = []
+            self.recorded_frames = []
             self.error_message = None
             self.should_stop = False
             self.is_paused = False
@@ -313,6 +428,7 @@ class CoSimulationOrchestrator:
                         self.attacker_id = vids[0]
 
                 step_events = []
+                step_wireless_events = []
                 for vid in vids:
                     pos = conn.vehicle.getPosition(vid)
                     spd = conn.vehicle.getSpeed(vid)
@@ -321,7 +437,58 @@ class CoSimulationOrchestrator:
                     lane = conn.vehicle.getLaneID(vid)
                     speeds.append(spd)
 
+                    # Extract extended TraCI vehicle dynamics
+                    try:
+                        accel = conn.vehicle.getAcceleration(vid)
+                    except Exception:
+                        accel = 0.0
+                    try:
+                        signals = conn.vehicle.getSignals(vid)
+                    except Exception:
+                        signals = 0
+                    try:
+                        length = conn.vehicle.getLength(vid)
+                        width = conn.vehicle.getWidth(vid)
+                    except Exception:
+                        length, width = 4.5, 1.9
+
+                    # Realistic vehicle classification
+                    vid_num = int(vid) if vid.isdigit() else abs(hash(vid))
+                    if vid_num % 12 == 0:
+                        vtype = "truck"
+                        length = max(length, 9.2)
+                        width = max(width, 2.5)
+                    elif vid_num % 12 == 1:
+                        vtype = "bus"
+                        length = max(length, 11.2)
+                        width = max(width, 2.55)
+                    elif vid_num % 12 in [2, 3]:
+                        vtype = "van"
+                        length = max(length, 5.6)
+                        width = max(width, 2.1)
+                    elif vid_num % 12 in [4, 5, 6]:
+                        vtype = "suv"
+                        length = max(length, 4.8)
+                        width = max(width, 2.0)
+                    else:
+                        vtype = "sedan"
+                        length = max(length, 4.3)
+                        width = max(width, 1.85)
+
+                    brake_active = bool((signals & 8) != 0 or accel < -0.4)
+                    turn_ind = "left" if (signals & 1) else ("right" if (signals & 2) else "none")
+
+                    # Associate with nearest RSU
+                    closest_rsu = None
+                    min_rsu_dist = 999999.0
+                    for rsu in self.active_rsus:
+                        dist = math.hypot(pos[0] - rsu["x"], pos[1] - rsu["y"])
+                        if dist < min_rsu_dist:
+                            min_rsu_dist = dist
+                            closest_rsu = rsu
+
                     is_att = (is_attack_active and vid == self.attacker_id)
+                    target_rsu_id = self.target_rsu if is_att else (closest_rsu["id"] if closest_rsu else "RSU_J0")
 
                     # Model nominal V2X packet rate vs malicious flooding
                     if is_att:
@@ -358,10 +525,18 @@ class CoSimulationOrchestrator:
                         "y": round(pos[1], 2),
                         "speed": round(spd, 2),
                         "speed_kmh": round(spd * 3.6, 1),
+                        "accel": round(accel, 2),
                         "angle": round(angle, 1),
                         "road_id": road,
                         "lane_id": lane,
+                        "vtype": vtype,
+                        "length": round(length, 1),
+                        "width": round(width, 1),
+                        "brake_light": brake_active,
+                        "turn_signal": turn_ind,
                         "is_attacker": is_att,
+                        "target_rsu": target_rsu_id,
+                        "rsu_distance": round(min_rsu_dist, 1),
                         "packet_rate": round(pkt_rate, 1),
                         "rate_limit_ratio": applied_ratio,
                         "z_score": round(z_score, 2),
@@ -369,6 +544,27 @@ class CoSimulationOrchestrator:
                         "streak": streak
                     }
                     frame_vehicles.append(v_data)
+
+                    # Transient wireless transmission events
+                    target_rsu_obj = next((r for r in self.active_rsus if r["id"] == target_rsu_id), closest_rsu)
+                    if target_rsu_obj and min_rsu_dist <= target_rsu_obj.get("range", 180.0):
+                        ev_type = "ATTACK_FLOOD" if is_att else "NORMAL_BEACON"
+                        if applied_ratio > 0:
+                            ev_type = "MITIGATED_THROTTLE"
+
+                        step_wireless_events.append({
+                            "id": f"{vid}_{self.step_index}",
+                            "from_node": vid,
+                            "to_rsu": target_rsu_id,
+                            "from_x": round(pos[0], 2),
+                            "from_y": round(pos[1], 2),
+                            "to_x": target_rsu_obj["x"],
+                            "to_y": target_rsu_obj["y"],
+                            "type": ev_type,
+                            "distance": round(min_rsu_dist, 1),
+                            "rssi_dbm": round(-45.0 - (20.0 * math.log10(max(1.0, min_rsu_dist))), 1),
+                            "dropped": bool(applied_ratio > 0 and (hash(vid + str(self.step_index)) % 10 < applied_ratio * 10))
+                        })
 
                     event_record = {
                         "timestamp": self.sim_clock,
@@ -393,6 +589,7 @@ class CoSimulationOrchestrator:
 
                 with self.lock:
                     self.active_vehicles = frame_vehicles
+                    self.wireless_events = step_wireless_events
                     self.total_observations += len(frame_vehicles)
                     self.total_tx_packets += ns3_metrics["tx"]
                     self.total_rx_packets += ns3_metrics["rx"]
@@ -423,6 +620,19 @@ class CoSimulationOrchestrator:
                     self.telemetry_history.append(telemetry_point)
                     if len(self.telemetry_history) > 120:
                         self.telemetry_history.pop(0)
+
+                    # Store frame for digital twin replay & scrubbing
+                    self.recorded_frames.append({
+                        "sim_clock": self.sim_clock,
+                        "step_index": self.step_index,
+                        "vehicles": frame_vehicles,
+                        "network_metrics": ns3_metrics,
+                        "wireless_events": step_wireless_events[:40],
+                        "telemetry": telemetry_point,
+                        "events": step_events
+                    })
+                    if len(self.recorded_frames) > 600:
+                        self.recorded_frames.pop(0)
 
                 if self.sim_clock >= self.duration:
                     break
@@ -617,7 +827,52 @@ class CoSimulationOrchestrator:
                 },
                 "vehicles": self.active_vehicles,
                 "rsus": self.active_rsus,
+                "wireless_events": self.wireless_events,
                 "recent_events": self.recent_events[:15],
-                "telemetry_history": self.telemetry_history[-30:]
+                "telemetry_history": self.telemetry_history[-30:],
+                "recorded_frames_count": len(self.recorded_frames)
+            }
+
+    def get_replay_frames(self, experiment_id: Optional[str] = None) -> Dict[str, Any]:
+        """Returns all recorded simulation frames for digital twin timeline playback and scrub."""
+        with self.lock:
+            # If requesting current or in-memory experiment
+            if not experiment_id or experiment_id == self.experiment_id:
+                return {
+                    "experiment_id": self.experiment_id,
+                    "scenario_id": self.scenario_id,
+                    "scenario_name": self.scenario_meta["name"],
+                    "duration": self.duration,
+                    "total_frames": len(self.recorded_frames),
+                    "frames": self.recorded_frames
+                }
+
+            # Otherwise, attempt to load experiment from database
+            try:
+                db = SessionLocal()
+                exp = db.query(Experiment).filter(Experiment.id == experiment_id).first()
+                if exp and exp.metrics:
+                    m = exp.metrics if isinstance(exp.metrics, dict) else json.loads(exp.metrics)
+                    co = m.get("co_simulation", {})
+                    return {
+                        "experiment_id": exp.id,
+                        "scenario_id": co.get("scenario", "scenario_a"),
+                        "scenario_name": exp.name,
+                        "duration": int(exp.duration_seconds),
+                        "total_frames": len(self.recorded_frames),
+                        "frames": self.recorded_frames,
+                        "summary_metrics": m
+                    }
+                db.close()
+            except Exception as e:
+                logger.warning(f"Could not load experiment {experiment_id} for replay: {e}")
+
+            return {
+                "experiment_id": self.experiment_id,
+                "scenario_id": self.scenario_id,
+                "scenario_name": self.scenario_meta["name"],
+                "duration": self.duration,
+                "total_frames": len(self.recorded_frames),
+                "frames": self.recorded_frames
             }
 

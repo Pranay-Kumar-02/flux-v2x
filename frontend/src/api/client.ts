@@ -441,6 +441,8 @@ export const api = {
   resumeCoSim: () => request<any>('/cosim/resume', { method: 'POST' }),
   stopCoSim: () => request<any>('/cosim/stop', { method: 'POST' }),
   getCoSimTelemetry: () => request<{ experiment_id: string; history: any[] }>('/cosim/telemetry'),
+  getCoSimReplay: (experimentId?: string) =>
+    request<any>(`/cosim/replay${experimentId ? `?experiment_id=${experimentId}` : ''}`),
 };
 
 export interface CoSimScenario {
@@ -457,12 +459,18 @@ export interface CoSimScenario {
 export interface CoSimTopology {
   scenario_id: string;
   scenario_name: string;
+  scenario_type?: string;
   bbox: { min_x: number; min_y: number; max_x: number; max_y: number };
   edges: Array<{ id: string; from_node: string; to_node: string; speed: number; lanes: number; shape: number[][] }>;
-  junctions: Array<{ id: string; x: number; y: number; type: string }>;
+  lanes?: Array<{ id: string; edge_id: string; index: number; width: number; speed: number; shape: number[][] }>;
+  junctions: Array<{ id: string; x: number; y: number; type: string; shape?: number[][] }>;
+  traffic_lights?: Array<{ id: string; type: string }>;
+  buildings?: Array<{ id: string; x: number; y: number; width: number; depth: number; height: number; type: string; color: string }>;
   rsus: Array<{ id: string; name: string; x: number; y: number; range: number; type: string }>;
   edge_count: number;
+  lane_count?: number;
   junction_count: number;
+  building_count?: number;
   rsu_count: number;
 }
 
@@ -472,15 +480,37 @@ export interface CoSimVehicle {
   y: number;
   speed: number;
   speed_kmh: number;
+  accel?: number;
   angle: number;
   road_id: string;
   lane_id: string;
+  vtype?: 'sedan' | 'suv' | 'van' | 'truck' | 'bus' | string;
+  length?: number;
+  width?: number;
+  brake_light?: boolean;
+  turn_signal?: 'none' | 'left' | 'right';
   is_attacker: boolean;
+  target_rsu?: string;
+  rsu_distance?: number;
   packet_rate: number;
   rate_limit_ratio: number;
   z_score: number;
   decision: string;
   streak: number;
+}
+
+export interface CoSimWirelessEvent {
+  id: string;
+  from_node: string;
+  to_rsu: string;
+  from_x: number;
+  from_y: number;
+  to_x: number;
+  to_y: number;
+  type: 'NORMAL_BEACON' | 'ATTACK_FLOOD' | 'MITIGATED_THROTTLE';
+  distance: number;
+  rssi_dbm: number;
+  dropped: boolean;
 }
 
 export interface CoSimStatus {
@@ -517,6 +547,8 @@ export interface CoSimStatus {
   };
   vehicles: CoSimVehicle[];
   rsus: Array<{ id: string; name: string; x: number; y: number; range: number; type: string }>;
+  wireless_events?: CoSimWirelessEvent[];
+  recorded_frames_count?: number;
   recent_events: Array<{
     timestamp: number;
     node_id: string;

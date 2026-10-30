@@ -97,6 +97,12 @@ def get_telemetry():
         "history": orchestrator.telemetry_history
     }
 
+@router.get("/replay")
+def get_replay(experiment_id: Optional[str] = Query(None)):
+    """Returns recorded simulation frames for digital twin timeline scrub and replay."""
+    orchestrator = CoSimulationOrchestrator.get_instance()
+    return orchestrator.get_replay_frames(experiment_id)
+
 @router.websocket("/ws")
 async def websocket_cosim_endpoint(websocket: WebSocket):
     """
