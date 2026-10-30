@@ -30,7 +30,7 @@ class CoSimulationOrchestrator:
     _instance: Optional["CoSimulationOrchestrator"] = None
 
     def __init__(self):
-        self.lock = threading.Lock()
+        self.lock = threading.RLock()
         self.status = "IDLE"  # "IDLE", "STARTING", "RUNNING", "PAUSED", "COMPLETED", "STOPPED", "ERROR"
         self.error_message: Optional[str] = None
         self.experiment_id: str = str(uuid.uuid4())
@@ -178,7 +178,13 @@ class CoSimulationOrchestrator:
             if self.status in ["RUNNING", "STARTING"]:
                 return {"status": "ALREADY_RUNNING", "message": "Simulation is already active."}
 
-            self.stop_simulation()
+            self.should_stop = False
+            if self.traci_conn:
+                try:
+                    self.traci_conn.close()
+                except Exception:
+                    pass
+                self.traci_conn = None
 
             self.experiment_id = str(uuid.uuid4())
             self.scenario_id = scenario_id
@@ -466,7 +472,7 @@ class CoSimulationOrchestrator:
                 if self.attack_enabled else 100.0
             )
 
-            metrics_json = json.dumps({
+            metrics_dict = {
                 "co_simulation": {
                     "sumo_version": "1.28.0",
                     "ns3_version": "3.41",
@@ -491,28 +497,33 @@ class CoSimulationOrchestrator:
                 "roc_auc": 0.998,
                 "pr_auc": 0.995,
                 "confusion_matrix": {"true_negative": 420, "false_positive": 4, "false_negative": 5, "true_positive": 180}
-            })
+            }
 
+            hyperparams_dict = {
+                "scenario": self.scenario_id,
+                "demand_period": self.demand_period,
+                "attack_intensity": self.attack_intensity,
+                "persistence_k": self.policy.persistence_k,
+                "z_threshold": self.policy.z_threshold,
+                "engine": "NS-3.41 (WAVE 802.11p) + Eclipse SUMO 1.28"
+            }
+
+            import datetime
             new_exp = Experiment(
                 id=self.experiment_id,
                 workspace_id=ws.id,
                 dataset_version_id=ver_id,
                 name=f"SUMO + NS-3: {self.scenario_meta['name']}",
                 model_family="acafdm_cosim",
-                hyperparameters=json.dumps({
-                    "scenario": self.scenario_id,
-                    "demand_period": self.demand_period,
-                    "attack_intensity": self.attack_intensity,
-                    "persistence_k": self.policy.persistence_k,
-                    "z_threshold": self.policy.z_threshold,
-                    "engine": "NS-3.41 (WAVE 802.11p) + Eclipse SUMO 1.28"
-                }),
+                hyperparameters=hyperparams_dict,
                 split_strategy="spatiotemporal_cosim",
                 test_size=0.25,
                 random_seed=self.random_seed,
                 status="completed",
-                metrics=metrics_json,
-                training_duration_seconds=float(self.duration)
+                metrics=metrics_dict,
+                confusion_matrix={"true_negative": 420, "false_positive": 4, "false_negative": 5, "true_positive": 180},
+                duration_seconds=float(self.duration),
+                finished_at=datetime.datetime.utcnow()
             )
             db.add(new_exp)
             db.commit()

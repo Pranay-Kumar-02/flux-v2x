@@ -26,7 +26,7 @@ class SUMOSimulationManager:
     _instance: Optional["SUMOSimulationManager"] = None
 
     def __init__(self):
-        self.lock = threading.Lock()
+        self.lock = threading.RLock()
         self.status: str = "IDLE"  # "IDLE", "RUNNING", "PAUSED", "COMPLETED", "ERROR"
         self.error_message: Optional[str] = None
         self.scenario_name: str = "urban_grid"
